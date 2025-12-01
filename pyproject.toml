@@ -1,0 +1,10 @@
+[project]
+name = "bibpay"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14.0"
+dependencies = [
+    "django>=5.2.8",
+    "djangorestframework>=3.16.1",
+]

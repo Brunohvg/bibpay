@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<!-- Saudação -->
+<div class="mb-4">
+    <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: 4px;">
+        Olá, João!
+    </h1>
+    <p style="color: var(--gray-500); font-size: 0.9rem; margin: 0;">
+        Resumo dos últimos 30 dias
+    </p>
+</div>
+
+<!-- Card principal com total recebido e botão de criar link -->
+<div class="card-app mb-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white;">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <p style="font-size: 0.8rem; opacity: 0.85; margin-bottom: 4px;">Total recebido (30 dias)</p>
+                <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">R$ 12.450,00</h2>
+            </div>
+            <a href="#" class="btn btn-light btn-sm" style="border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-plus-lg me-1"></i>Novo Link
+            </a>
+        </div>
+        <div class="d-flex gap-3 flex-wrap" style="font-size: 0.8rem; opacity: 0.9;">
+            <span><i class="bi bi-clock me-1"></i>Pendente: R$ 2.340,00</span>
+            <span><i class="bi bi-x-circle me-1"></i>Cancelado: R$ 450,00</span>
+        </div>
+    </div>
+</div>
+
+<!-- Métricas de Links nos últimos 30 dias -->
+<p class="section-title">Links Criados</p>
+<div class="row g-3 mb-4">
+    <div class="col-4">
+        <div class="metric-card text-center">
+            <div class="metric-value" style="color: var(--primary);">47</div>
+            <div class="metric-label">Total</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="metric-card text-center">
+            <div class="metric-value" style="color: var(--success);">32</div>
+            <div class="metric-label">Pagos</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="metric-card text-center">
+            <div class="metric-value" style="color: var(--warning);">15</div>
+            <div class="metric-label">Pendentes</div>
+        </div>
+    </div>
+</div>
+
+<!-- Taxa de conversão -->
+<div class="card-app mb-4">
+    <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span style="font-size: 0.9rem; color: var(--gray-600);">Taxa de conversão</span>
+            <span style="font-size: 1rem; font-weight: 700; color: var(--success);">68%</span>
+        </div>
+        <div class="progress" style="height: 8px; border-radius: 8px; background: var(--gray-100);">
+            <div class="progress-bar" role="progressbar" style="width: 68%; background: var(--success); border-radius: 8px;"></div>
+        </div>
+        <small style="color: var(--gray-500); font-size: 0.75rem;">32 pagos de 47 links criados</small>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<p class="section-title">Ações Rápidas</p>
+<div class="acoes-rapidas mb-4">
+    <a href="#" class="acao-btn">
+        <div class="acao-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+            <i class="bi bi-link-45deg"></i>
+        </div>
+        <span>Criar Link</span>
+    </a>
+    <a href="#" class="acao-btn">
+        <div class="acao-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
+            <i class="bi bi-truck"></i>
+        </div>
+        <span>Calcular Frete</span>
+    </a>
+    <a href="#" class="acao-btn">
+        <div class="acao-icon" style="background: rgba(249, 115, 22, 0.1); color: var(--warning);">
+            <i class="bi bi-person-plus"></i>
+        </div>
+        <span>Vendedor</span>
+    </a>
+    <a href="#" class="acao-btn">
+        <div class="acao-icon" style="background: rgba(107, 114, 128, 0.1); color: var(--gray-600);">
+            <i class="bi bi-list-ul"></i>
+        </div>
+        <span>Pedidos</span>
+    </a>
+</div>
+
+<!-- Links Recentes com status -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <p class="section-title mb-0">Links Recentes</p>
+    <a href="#" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Ver todos</a>
+</div>
+<div class="card-app mb-4">
+    <!-- Link Pago -->
+    <a href="#" class="list-item">
+        <div class="list-icon bg-success-light">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="list-content">
+            <div class="list-title">Maria Santos</div>
+            <div class="list-subtitle">Vendedor: Carlos • 3x R$ 66,63</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount text-success">R$ 199,90</div>
+            <div class="list-date">Pago</div>
+        </div>
+    </a>
+    
+    <!-- Link Pendente -->
+    <a href="#" class="list-item">
+        <div class="list-icon bg-warning-light">
+            <i class="bi bi-clock-fill"></i>
+        </div>
+        <div class="list-content">
+            <div class="list-title">João Oliveira</div>
+            <div class="list-subtitle">Vendedor: Ana • 2x R$ 74,95</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount" style="color: var(--warning);">R$ 149,90</div>
+            <div class="list-date">Pendente</div>
+        </div>
+    </a>
+    
+    <!-- Link Pago -->
+    <a href="#" class="list-item">
+        <div class="list-icon bg-success-light">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="list-content">
+            <div class="list-title">Pedro Almeida</div>
+            <div class="list-subtitle">Vendedor: Carlos • À vista</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount text-success">R$ 89,90</div>
+            <div class="list-date">Pago</div>
+        </div>
+    </a>
+    
+    <!-- Link Cancelado -->
+    <a href="#" class="list-item">
+        <div class="list-icon bg-danger-light">
+            <i class="bi bi-x-circle-fill"></i>
+        </div>
+        <div class="list-content">
+            <div class="list-title">Fernanda Costa</div>
+            <div class="list-subtitle">Vendedor: Ana • 3x R$ 99,97</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount" style="color: var(--danger);">R$ 299,90</div>
+            <div class="list-date">Cancelado</div>
+        </div>
+    </a>
+    
+    <!-- Link Expirado -->
+    <a href="#" class="list-item">
+        <div class="list-icon" style="background: var(--gray-100);">
+            <i class="bi bi-hourglass-bottom" style="color: var(--gray-500);"></i>
+        </div>
+        <div class="list-content">
+            <div class="list-title">Lucas Mendes</div>
+            <div class="list-subtitle">Vendedor: Carlos • À vista</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount" style="color: var(--gray-500);">R$ 59,90</div>
+            <div class="list-date">Expirado</div>
+        </div>
+    </a>
+</div>
+
+<!-- Top Vendedores do mês -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <p class="section-title mb-0">Top Vendedores</p>
+    <a href="#" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Ver todos</a>
+</div>
+<div class="card-app">
+    <div class="list-item">
+        <div class="ranking-pos" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">1</div>
+        <div class="list-content">
+            <div class="list-title">Carlos Silva</div>
+            <div class="list-subtitle">18 links • 14 pagos</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount">R$ 5.420,00</div>
+            <div class="list-date text-success">78%</div>
+        </div>
+    </div>
+    <div class="list-item">
+        <div class="ranking-pos" style="background: linear-gradient(135deg, #9ca3af, #6b7280);">2</div>
+        <div class="list-content">
+            <div class="list-title">Ana Souza</div>
+            <div class="list-subtitle">15 links • 10 pagos</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount">R$ 4.180,00</div>
+            <div class="list-date text-success">67%</div>
+        </div>
+    </div>
+    <div class="list-item">
+        <div class="ranking-pos" style="background: linear-gradient(135deg, #d97706, #b45309);">3</div>
+        <div class="list-content">
+            <div class="list-title">Roberto Lima</div>
+            <div class="list-subtitle">14 links • 8 pagos</div>
+        </div>
+        <div class="list-value">
+            <div class="list-amount">R$ 2.850,00</div>
+            <div class="list-date" style="color: var(--warning);">57%</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Ações Rápidas Grid */
+    .acoes-rapidas {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    
+    .acao-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        padding: 16px 8px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: all 0.2s;
+    }
+    
+    .acao-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .acao-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+    }
+    
+    .acao-icon i {
+        font-size: 1.4rem;
+    }
+    
+    .acao-btn span {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-align: center;
+    }
+    
+    /* Ranking Position */
+    .ranking-pos {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: white;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    
+    /* Ajuste nos metric cards */
+    .metric-card {
+        padding: 16px 12px;
+    }
+    
+    .metric-card .metric-value {
+        font-size: 1.5rem;
+        margin-bottom: 2px;
+    }
+    
+    .metric-card .metric-label {
+        font-size: 0.75rem;
+    }
+    
+    /* Responsivo */
+    @media (max-width: 380px) {
+        .acoes-rapidas {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
