@@ -19,15 +19,20 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+
+    # Default Django Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Custom Apps
     'apps.core',
     'apps.orders',
     'apps.sellers',
+    'apps.dashboard',
 ]
 
 MIDDLEWARE = [

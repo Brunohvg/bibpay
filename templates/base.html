@@ -502,11 +502,11 @@
 
     <!-- Menu Inferior -->
     <nav class="bottom-nav">
-        <a href="#" class="bottom-nav-item {% block nav_home %}{% endblock %}">
+        <a href="{% url "dashboard:dashboard-home" %}" class="bottom-nav-item {% block nav_home %}{% endblock %}">
             <i class="bi bi-house"></i>
             <span>Início</span>
         </a>
-        <a href="#" class="bottom-nav-item {% block nav_links %}{% endblock %}">
+        <a href="{% url "orders:order-create" %}" class="bottom-nav-item {% block nav_links %}{% endblock %}">
             <i class="bi bi-link-45deg"></i>
             <span>Links</span>
         </a>

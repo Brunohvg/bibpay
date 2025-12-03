@@ -1,9 +1,8 @@
 from django.shortcuts import render
 from django.views import View
-from django.views.generic.edit import CreateView
-from apps.orders.services import create_order, update_order, delete_order, list_orders, get_order, filter_orders
-from apps.sellers.services import list_sellers, get_seller
-from apps.orders.utils import formatar_valor
+from apps.orders.services import create_order, list_orders
+from apps.sellers.services import list_sellers
+
 
 class OrderCreateView(View):
     def get(self, request):
