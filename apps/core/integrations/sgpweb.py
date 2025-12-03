@@ -1,110 +1,120 @@
 import requests
 from decouple import config
 
-TOKEN = config("MAIL_ACCESS_KEY")
 
-URL_PRECO = "https://api.correios.com.br/preco/v1/nacional"
-URL_PRAZO = "https://api.correios.com.br/prazo/v1/nacional"
+class CorreiosAPI:
+    """
+    Cliente simples para consultar preço e prazo da API dos Correios.
+    Tudo dinâmico. Você passa parâmetros, ela devolve os resultados.
+    """
 
+    def __init__(self):
+        self.token = config("MAIL_ACCESS_KEY")
 
+        self.url_preco = "https://api.correios.com.br/preco/v1/nacional"
+        self.url_prazo = "https://api.correios.com.br/prazo/v1/nacional"
 
-def calcular_preco_prazo():
-    # Cabeçalhos da API
-    headers = {
-        "Authorization": f"Bearer {TOKEN}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-
-    # Lote que vamos usar para preço e prazo
-    id_lote = "lote-001"
+        self.headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
 
     # -------------------------
-    # 1) Parâmetros do PREÇO
+    # CONSULTAS SIMPLES
     # -------------------------
-    dados_preco = {
-        "idLote": id_lote,
-        "parametrosProduto": [
-            {
-                "coProduto": "03220",         # SEDEX
-                "nuRequisicao": 1,
-                "cepOrigem": "30170903",
-                "cepDestino": "34600190",
-                "psObjeto": 300,
-                "comprimento": 22,
-                "largura": 16,
-                "altura": 18,
-                "nuFormato": 1
-            },
-            {
-                "coProduto": "03298",        # PAC 
-                "nuRequisicao": 2,
-                "cepOrigem": "30170903",
-                "cepDestino": "34600190",
-                "psObjeto": 300,
-                "comprimento": 22,
-                "largura": 16,
-                "altura": 18,
-                "nuFormato": 1
+
+    def consultar_preco(self, payload: dict):
+        resp = requests.post(self.url_preco, json=payload, headers=self.headers)
+        return resp.json()
+
+    def consultar_prazo(self, payload: dict):
+        resp = requests.post(self.url_prazo, json=payload, headers=self.headers)
+        return resp.json()
+
+    # -------------------------
+    # MÉTODO PRINCIPAL (DINÂMICO)
+    # -------------------------
+
+    def calcular(self,
+                 produtos: list,
+                 cep_origem: str,
+                 cep_destino: str,
+                 peso: int,
+                 comprimento: int,
+                 largura: int,
+                 altura: int,
+                 formato: int = 1):
+        """
+        produtos → lista de códigos ["03220", "03298"]
+        """
+
+        id_lote = "lote-001"
+
+        # ----- Monta params PREÇO -----
+        parametros_preco = []
+        for i, produto in enumerate(produtos, start=1):
+            parametros_preco.append({
+                "coProduto": produto,
+                "nuRequisicao": i,
+                "cepOrigem": cep_origem,
+                "cepDestino": cep_destino,
+                "psObjeto": peso,
+                "comprimento": comprimento,
+                "largura": largura,
+                "altura": altura,
+                "nuFormato": formato,
+            })
+
+        payload_preco = {
+            "idLote": id_lote,
+            "parametrosProduto": parametros_preco
+        }
+
+        # ----- Monta params PRAZO -----
+        parametros_prazo = []
+        for i, produto in enumerate(produtos, start=1):
+            parametros_prazo.append({
+                "coProduto": produto,
+                "nuRequisicao": i,
+                "cepOrigem": cep_origem,
+                "cepDestino": cep_destino,
+            })
+
+        payload_prazo = {
+            "idLote": id_lote,
+            "parametrosPrazo": parametros_prazo
+        }
+
+        # ----- Chama APIs -----
+        preco = self.consultar_preco(payload_preco)
+        prazo = self.consultar_prazo(payload_prazo)
+
+        # ----- Junta retorno organizado -----
+        retorno = {}
+        for i, produto in enumerate(produtos, start=1):
+            retorno[produto] = {
+                "preco": preco[i - 1] if isinstance(preco, list) else preco,
+                "prazo": prazo[i - 1] if isinstance(prazo, list) else prazo,
             }
-        ]
-    }
 
-    # -------------------------
-    # 2) Parâmetros do PRAZO
-    # -------------------------
-    dados_prazo = {
-        "idLote": id_lote,
-        "parametrosPrazo": [
-            {
-                "coProduto": "03220",
-                "nuRequisicao": 1,
-                "cepOrigem": "30170903",
-                "cepDestino": "34600190"
-            },
-            {
-                "coProduto": "03298",
-                "nuRequisicao": 2,
-                "cepOrigem": "30170903",
-                "cepDestino": "34600190"
-            }
-        ]
-    }
-
-    # -------------------------
-    # Chamada PREÇO
-    # -------------------------
-    resp_preco = requests.post(URL_PRECO, json=dados_preco, headers=headers)
-    preco_data = resp_preco.json()
-
-    # -------------------------
-    # Chamada PRAZO
-    # -------------------------
-    resp_prazo = requests.post(URL_PRAZO, json=dados_prazo, headers=headers)
-    prazo_data = resp_prazo.json()
-
-    # -------------------------
-    # Junta os dois resultados
-    # -------------------------
-    resultado_final = {
-        "PAC": {
-            "preco": preco_data,
-            "prazo": prazo_data,
-        },
-        "SEDEX": {
-            "preco": preco_data,
-            "prazo": prazo_data,
-        },
-    }
-
-    return resultado_final
+        return retorno
 
 
-
-
-        
-
-    
-# TESTE
+# -------------------------
+# TESTE RÁPIDO
+# -------------------------
 if __name__ == "__main__":
-    print(calcular_preco_prazo())
+    api = CorreiosAPI()
+
+    resultado = api.calcular(
+        produtos=["03220", "03298"],  # SEDEX / PAC
+        cep_origem="30170903",
+        cep_destino="35384000",
+        peso=300,
+        comprimento=22,
+        largura=16,
+        altura=18
+    )
+
+    print(resultado)
