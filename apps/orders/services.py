@@ -6,45 +6,20 @@ from apps.core.integrations.pagarme import PagarMePaymentLink
 
 
 def create_order(data):
-    """
-    Cria um pedido e gera um link de pagamento no Pagar.me para teste.
-    
-    Args:
-        data (dict): Dados contendo cliente_nome, valor_produto, valor_frete, parcelas, vendedor
-        
-    Returns:
-        Order: Instância do pedido criado
-    """
-    order_data = {
-        'name': data['cliente_nome'],
-        'value': formatar_valor(data['valor_produto']),
-        'value_freight': formatar_valor(data['valor_frete']),
-        'status': 'pending',
-        'installments': data['parcelas'],
-        'seller': get_seller(seller_id=data['vendedor'])
-    }
-    
-    # Gerar link de pagamento (será salvo depois em outro model)
     try:
-        link = PagarMePaymentLink(
-            customer_name=order_data.get('name'), 
-            total_amount=int(order_data.get('value') * 100),  # Converter para centavos
-            max_installments=order_data.get('installments'), 
-            free_installments=order_data.get('installments')
-        )
-        
-        response = link.create_link()
-        print(f"✓ Link gerado com sucesso:")
-        print(f"URL: {response.get('short_url') or response.get('url')}")
-        print(f"ID: {response.get('id')}")
-        print(f"Resposta completa: {response}")
-        
+        order_data = {
+            "name": data.get("cliente_nome", "").strip(),
+            "value": formatar_valor(data.get("valor_produto", "0")),
+            "value_freight": formatar_valor(data.get("valor_frete", "0")),
+            "status": "pending",
+            "installments": int(data.get("parcelas", 1)),
+            "seller": get_seller(seller_id=data.get("vendedor")),
+        }
     except Exception as e:
-        print(f"✗ Erro ao gerar link: {str(e)}")
-    
-    # Criar pedido (o link será salvo depois em outro model conforme necessário)
-    order = Order.objects.create(**order_data)
-    return order
+        raise ValueError(f"Erro ao criar pedido: {e}")
+
+    return Order.objects.create(**order_data)
+
 
 # Atualizar um pedido
 def update_order(order_id, data):
