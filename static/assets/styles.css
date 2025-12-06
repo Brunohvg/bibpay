@@ -40,13 +40,18 @@ body {
 }
 
 .navbar-app .navbar-brand {
-    font-weight: 700;
-    font-size: 1.25rem;
     color: var(--primary);
+    font-weight: bold;
+    font-size: 1.4rem;
 }
 
 .navbar-app .navbar-brand i {
     margin-right: 6px;
+}
+
+.navbar-app .nav-link {
+    color: var(--gray-600);
+    font-weight: 500;
 }
 
 .navbar-avatar {
@@ -70,7 +75,7 @@ body {
     right: 0;
     height: 70px;
     background: white;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -1px 3px rgba(0,0,0,0.08);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -282,13 +287,19 @@ body {
 
 /* Seções */
 .section-title {
-    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--gray-500);
+    color: var(--gray-600);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 12px;
-    padding: 0 4px;
+}
+
+.section-title i {
+    font-size: 1rem;
+    color: var(--primary);
 }
 
 /* Botões */
@@ -478,3 +489,95 @@ body {
 .copy-btn:hover {
     background: var(--gray-200);
 }
+
+/* Floating Inputs from order.html */
+.input-float {
+    border-radius: 14px;
+    border: 1.5px solid var(--gray-200);
+    height: 58px;
+    font-size: 1rem;
+    background: var(--gray-50);
+}
+
+.input-float:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: white;
+}
+
+.form-floating > label {
+    color: var(--gray-500);
+}
+
+/* Botão Gerar Link from order.html */
+.btn-gerar-link {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 16px;
+    padding: 18px 24px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-gerar-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.btn-gerar-link:active {
+    transform: translateY(0);
+}
+
+/* Footer Links (Auth pages) */
+.text-center a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* --- Estilos de Autenticação --- */
+.auth-container {
+    padding-top: 40px;
+}
+
+.auth-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.auth-header .h3 {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.auth-card .form-control {
+    border-radius: 8px;
+    padding: 12px;
+    background-color: var(--gray-100);
+    border: 1px solid var(--gray-200);
+}
+
+.auth-card .form-control:focus {
+    background-color: white;
+    border-color: var(--primary);
+    box-shadow: none;
+}
+
+.auth-card .btn {
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.auth-footer a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+/* --- Fim Estilos de Autenticação --- */

@@ -1,0 +1,23 @@
+{% extends "base_auth.html" %}
+
+{% block title_auth %}Sair da Conta{% endblock %}
+{% block subtitle_auth %}Confirmação{% endblock %}
+
+{% block content_auth %}
+    <p>Você tem certeza que deseja sair da sua conta?</p>
+    <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <div class="d-grid mt-4">
+            <button type="submit" class="btn-gerar-link" style="--bs-btn-bg: var(--danger); --bs-btn-border-color: var(--danger);">
+                <i class="bi bi-box-arrow-left me-2"></i>
+                Sim, quero sair
+            </button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block footer_auth %}
+    <p>
+        <a href="/">Cancelar e voltar para o início</a>
+    </p>
+{% endblock %}

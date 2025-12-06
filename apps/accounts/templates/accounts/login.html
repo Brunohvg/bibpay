@@ -1,0 +1,40 @@
+{% extends "base_auth.html" %}
+{% load static %}
+
+{% block title_auth %}Login de Acesso{% endblock %}
+{% block subtitle_auth %}Dados de Acesso{% endblock %}
+
+{% block content_auth %}
+    {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+            Seu usuário e senha não correspondem. Tente novamente.
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'accounts:login' %}">
+        {% csrf_token %}
+        <div class="form-floating mb-3">
+            <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" class="form-control input-float" required id="id_username" placeholder="Usuário">
+            <label for="id_username">Usuário</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="password" name="password" autocomplete="current-password" class="form-control input-float" required id="id_password" placeholder="Senha">
+            <label for="id_password">Senha</label>
+        </div>
+        <div class="d-grid mt-4">
+            <button type="submit" class="btn-gerar-link">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Entrar
+            </button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block footer_auth %}
+    <p>
+        <a href="{% url 'accounts:password_reset' %}">Esqueceu sua senha?</a>
+    </p>
+    <p>
+        Não tem uma conta? <a href="{% url 'accounts:signup' %}">Cadastre-se</a>
+    </p>
+{% endblock %}

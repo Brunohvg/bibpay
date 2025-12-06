@@ -2,6 +2,7 @@
 from apps.payments.models import PaymentLink
 from apps.core.integrations.pagarme import PagarMePaymentLink
 
+
 def process_payment_link_for_order(order):
     link_data = generate_payment_link(order)
 
@@ -19,7 +20,7 @@ def generate_payment_link(order):
     try:
         pagarme = PagarMePaymentLink(
             customer_name=order.name,
-            total_amount=int(order.total * 100),    # centavos
+            total_amount=int(order.total * 100),  # centavos
             max_installments=order.installments,
             free_installments=order.installments,
         )
@@ -47,3 +48,10 @@ def create_payment_link_record(order, link_data):
     except Exception as e:
         print(f"✗ Erro ao criar PaymentLink: {e}")
         return None
+
+
+def get_payment_links_for_order(order):
+    """
+    Retorna todos os links de pagamento associados a um pedido.
+    """
+    return PaymentLink.objects.filter(order=order, is_active=True, is_deleted=False)

@@ -1,5 +1,6 @@
 from apps.core.models import BaseModel
 from django.db import models
+
 PAYMENT_STATUS = (
     ("pending", "Pendente"),
     ("paid", "Pago"),
@@ -14,6 +15,7 @@ PAYMENT_LINK_STATUS = (
     ("inactive", "Inativo"),
     ("expired", "Expirado"),
 )
+
 
 class PaymentLink(BaseModel):
     order = models.ForeignKey(
@@ -40,6 +42,7 @@ class PaymentLink(BaseModel):
         verbose_name_plural = "Links de Pagamento"
         ordering = ["-created_at"]
         db_table = "payment_links"
+
 
 class Payment(BaseModel):
 
