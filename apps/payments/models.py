@@ -26,7 +26,7 @@ class PaymentLink(BaseModel):
     )
     url_link = models.URLField(max_length=500, verbose_name="Link de pagamento")
     id_link = models.CharField(max_length=255, verbose_name="ID do link de pagamento")
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor", null=True, blank=True)
     status = models.CharField(
         max_length=50,
         choices=PAYMENT_LINK_STATUS,
@@ -56,11 +56,14 @@ class Payment(BaseModel):
         max_length=50, choices=PAYMENT_STATUS, default="pending", verbose_name="Status"
     )
     payment_date = models.DateTimeField(verbose_name="Data do pagamento")
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor", null=True, blank=True)
 
     def __str__(self):
         return f"Pagamento {self.id} — Link {self.payment_link_id} — R$ {self.amount}"
-
+    
+    @property
+    def order(self):
+        return self.payment_link.order
     class Meta:
         verbose_name = "Pagamento"
         verbose_name_plural = "Pagamentos"

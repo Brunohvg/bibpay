@@ -12,6 +12,7 @@
     </h1>
     <p style="color: var(--gray-500); font-size: 0.9rem; margin: 0;">
         Resumo dos últimos 30 dias
+        {{orders}}
     </p>
 </div>
 
@@ -21,7 +22,7 @@
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <p style="font-size: 0.8rem; opacity: 0.85; margin-bottom: 4px;">Total recebido (30 dias)</p>
-                <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">R$ 12.450,00</h2>
+                <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">R$ {{total_received}}</h2>
             </div>
             <a href="#" class="btn btn-light btn-sm" style="border-radius: 10px; font-weight: 600;">
                 <i class="bi bi-plus-lg me-1"></i>Novo Link

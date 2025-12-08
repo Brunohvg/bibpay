@@ -5,88 +5,118 @@
 {% block nav_home %}active{% endblock %}
 
 {% block content %}
-<!-- Saudação genérica sem login -->
+<!-- Header Principal -->
 <div class="mb-4">
     <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: 4px;">
-        Painel de Links
+        Sistema de Links de Pagamento
     </h1>
     <p style="color: var(--gray-500); font-size: 0.9rem; margin: 0;">
-        Resumo dos últimos 30 dias
+        Visão geral dos últimos 30 dias
     </p>
 </div>
 
-<!-- Card principal com dados gerais do sistema -->
+<!-- Card Hero com Estatísticas Gerais -->
 <div class="card-app mb-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white;">
     <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
-                <p style="font-size: 0.8rem; opacity: 0.85; margin-bottom: 4px;">Total recebido</p>
-                <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">R$ {{ orders.value|default:"12.450,00"}}</h2>
+                <p style="font-size: 0.8rem; opacity: 0.85; margin-bottom: 4px;">Volume Total Processado</p>
+                <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">R$ {{ volume_total|floatformat:2|default:"0,00" }}</h2>
+                <p style="font-size: 0.75rem; opacity: 0.75; margin-top: 4px;">Últimos 30 dias</p>
             </div>
             <a href="#" class="btn btn-light btn-sm" style="border-radius: 10px; font-weight: 600;">
-                <i class="bi bi-plus-lg me-1"></i>Novo Link
+                <i class="bi bi-plus-lg me-1"></i>Criar Link
             </a>
         </div>
         <div class="d-flex gap-3 flex-wrap" style="font-size: 0.8rem; opacity: 0.9;">
-            <span><i class="bi bi-clock me-1"></i>Pendente: R$ {{ total_pendente|default:"2.340,00" }}</span>
-            <span><i class="bi bi-people me-1"></i>{{ total_vendedores|default:"5" }} vendedores</span>
+            <span><i class="bi bi-link-45deg me-1"></i>{{ total_links_criados|default:"0" }} links criados</span>
+            <span><i class="bi bi-graph-up me-1"></i>Taxa conversão {{ taxa_conversao|default:"0" }}%</span>
         </div>
     </div>
 </div>
 
-<!-- Métricas reorganizadas com gráfico de conversão visual -->
+<!-- Métricas de Performance -->
 <div class="row g-3 mb-4">
-    <div class="col-8">
+    <div class="col-6">
         <div class="card-app h-100 p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span style="font-size: 0.75rem; color: var(--gray-500); font-weight: 600; text-transform: uppercase;">Taxa de Conversão</span>
-                <span style="font-size: 0.75rem; color: var(--success); font-weight: 700;">+12% este mês</span>
+            <div class="metric-label">Links Ativos</div>
+            <div class="d-flex align-items-end gap-2 mb-2">
+                <span class="metric-value">{{ total_links_ativos|default:"0" }}</span>
+                {% if taxa_conversao %}
+                <span class="metric-trend positive">+{{ total_pagos|default:"0" }}</span>
+                {% endif %}
             </div>
-            <div class="d-flex align-items-end gap-2">
-                <span style="font-size: 2rem; font-weight: 700; color: var(--gray-900); line-height: 1;">67%</span>
-                <span style="font-size: 0.8rem; color: var(--gray-500); margin-bottom: 4px;">32 de 48 links</span>
+            <div class="metric-progress">
+                <div class="progress-bar" style="width: {{ taxa_conversao|default:"0" }}%; background: var(--primary);"></div>
             </div>
-            <!-- Barra de progresso visual -->
-            <div class="mt-3" style="height: 8px; background: var(--gray-100); border-radius: 4px; overflow: hidden;">
-                <div style="width: 67%; height: 100%; background: linear-gradient(90deg, var(--success), #34d399); border-radius: 4px;"></div>
-            </div>
+            <div class="metric-subtitle">{{ taxa_conversao|default:"0" }}% de conversão</div>
         </div>
     </div>
-    <div class="col-4">
-        <div class="card-app h-100 p-3 d-flex flex-column justify-content-between">
-            <div class="text-center">
-                <div style="font-size: 1.8rem; font-weight: 700; color: var(--warning);">6</div>
-                <div style="font-size: 0.7rem; color: var(--gray-500);">Expiram Hoje</div>
+    <div class="col-6">
+        <div class="card-app h-100 p-3">
+            <div class="metric-label">Ticket Médio</div>
+            <div class="d-flex align-items-end gap-2 mb-2">
+                <span class="metric-value">R$ {{ ticket_medio|floatformat:0|default:"0" }}</span>
+                {% if week_growth_positive %}
+                <span class="metric-trend positive">+{{ week_growth|default:"0" }}%</span>
+                {% else %}
+                <span class="metric-trend negative">{{ week_growth|default:"0" }}%</span>
+                {% endif %}
             </div>
-            <a href="#" class="btn btn-sm w-100 mt-2" style="background: rgba(249, 115, 22, 0.1); color: var(--warning); font-size: 0.7rem; font-weight: 600; border-radius: 8px;">
-                Ver
-            </a>
+            <div class="metric-progress">
+                <div class="progress-bar" style="width: 65%; background: var(--success);"></div>
+            </div>
+            <div class="metric-subtitle">vs. mês anterior</div>
         </div>
     </div>
 </div>
 
-<!-- Mini resumo em linha -->
-<div class="d-flex gap-2 mb-4" style="overflow-x: auto; padding-bottom: 4px;">
-    <div class="mini-stat">
-        <i class="bi bi-link-45deg"></i>
-        <span><strong>48</strong> criados</span>
+<!-- Status dos Links -->
+<p class="section-title">Resumo de Status</p>
+<div class="status-grid mb-4">
+    <div class="status-card status-success">
+        <div class="status-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="status-info">
+            <div class="status-value">{{ total_pagos|default:"0" }}</div>
+            <div class="status-label">Pagos</div>
+        </div>
     </div>
-    <div class="mini-stat">
-        <i class="bi bi-check-circle text-success"></i>
-        <span><strong>32</strong> pagos</span>
+    
+    <div class="status-card status-warning">
+        <div class="status-icon">
+            <i class="bi bi-clock-fill"></i>
+        </div>
+        <div class="status-info">
+            <div class="status-value">{{ total_pendentes|default:"0" }}</div>
+            <div class="status-label">Pendentes</div>
+        </div>
     </div>
-    <div class="mini-stat">
-        <i class="bi bi-clock text-warning"></i>
-        <span><strong>10</strong> pendentes</span>
+    
+    <div class="status-card status-danger">
+        <div class="status-icon">
+            <i class="bi bi-x-circle-fill"></i>
+        </div>
+        <div class="status-info">
+            <div class="status-value">{{ total_cancelados|default:"0" }}</div>
+            <div class="status-label">Cancelados</div>
+        </div>
     </div>
-    <div class="mini-stat">
-        <i class="bi bi-x-circle text-danger"></i>
-        <span><strong>6</strong> cancelados</span>
+    
+    <div class="status-card status-info">
+        <div class="status-icon">
+            <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="status-info">
+            <div class="status-value">{{ total_links_expirados|default:"0" }}</div>
+            <div class="status-label">Expirados</div>
+        </div>
     </div>
 </div>
 
 <!-- Ações Rápidas -->
-<p class="section-title">Ações Rápidas</p>
+<p class="section-title">Funcionalidades</p>
 <div class="acoes-rapidas mb-4">
     <a href="#" class="acao-btn">
         <div class="acao-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
@@ -96,250 +126,240 @@
     </a>
     <a href="#" class="acao-btn">
         <div class="acao-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-            <i class="bi bi-truck"></i>
-        </div>
-        <span>Calcular Frete</span>
-    </a>
-    <a href="#" class="acao-btn">
-        <div class="acao-icon" style="background: rgba(249, 115, 22, 0.1); color: var(--warning);">
-            <i class="bi bi-person-plus"></i>
-        </div>
-        <span>Vendedor</span>
-    </a>
-    <a href="#" class="acao-btn">
-        <div class="acao-icon" style="background: rgba(107, 114, 128, 0.1); color: var(--gray-600);">
-            <i class="bi bi-receipt"></i>
+            <i class="bi bi-credit-card"></i>
         </div>
         <span>Pedidos</span>
     </a>
+    <a href="#" class="acao-btn">
+        <div class="acao-icon" style="background: rgba(249, 115, 22, 0.1); color: var(--warning);">
+            <i class="bi bi-graph-up"></i>
+        </div>
+        <span>Relatórios</span>
+    </a>
+    <a href="#" class="acao-btn">
+        <div class="acao-icon" style="background: rgba(107, 114, 128, 0.1); color: var(--gray-600);">
+            <i class="bi bi-gear"></i>
+        </div>
+        <span>Configurar</span>
+    </a>
 </div>
 
-<!-- Links recentes de todos os vendedores com filtro -->
-<div class="d-flex justify-content-between align-items-center mb-2">
+<!-- Gráfico de Atividade -->
+<p class="section-title">Atividade dos Últimos 7 Dias</p>
+<div class="card-app p-3 mb-4">
+    <div class="grafico-barras">
+        {% for data in chart_data %}
+        <div class="grafico-dia {% if data.is_today %}hoje{% endif %}">
+            <div class="barra-container">
+                <div class="barra {% if data.is_today %}barra-hoje{% endif %}" style="height: {{ data.height }}%;"></div>
+            </div>
+            <span class="dia-label">{{ data.day }}</span>
+            <span class="dia-valor">{{ data.count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="grafico-footer">
+        <div>
+            <span class="footer-label">Links esta semana</span>
+            <div class="footer-value">{{ this_week_total|floatformat:2|default:"0,00" }}</div>
+        </div>
+        <div class="text-end">
+            <span class="footer-label">vs. semana anterior</span>
+            <div class="footer-value {% if week_growth_positive %}text-success{% else %}text-danger{% endif %}">
+                {% if week_growth_positive %}+{% endif %}{{ week_growth|default:"0" }}%
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Links Recentes -->
+{% if recent_links %}
+<div class="d-flex justify-content-between align-items-center mb-3">
     <p class="section-title mb-0">Links Recentes</p>
     <a href="#" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Ver todos</a>
 </div>
 
-<!-- Filtro rápido por vendedor -->
-<div class="mb-3" style="overflow-x: auto; white-space: nowrap; padding-bottom: 8px;">
-    <button class="btn btn-sm me-2 active" style="border-radius: 20px; font-size: 0.75rem; padding: 6px 14px; background: var(--primary); color: white; border: none;">
-        Todos
-    </button>
-    <button class="btn btn-sm me-2" style="border-radius: 20px; font-size: 0.75rem; padding: 6px 14px; background: var(--gray-100); color: var(--gray-700); border: none;">
-        Carlos Silva
-    </button>
-    <button class="btn btn-sm me-2" style="border-radius: 20px; font-size: 0.75rem; padding: 6px 14px; background: var(--gray-100); color: var(--gray-700); border: none;">
-        Ana Souza
-    </button>
-    <button class="btn btn-sm me-2" style="border-radius: 20px; font-size: 0.75rem; padding: 6px 14px; background: var(--gray-100); color: var(--gray-700); border: none;">
-        Pedro Lima
-    </button>
-</div>
-
 <div class="card-app mb-4">
-    <!-- Lista mostrando vendedor responsável -->
+    {% for item in recent_links %}
     <a href="#" class="list-item">
-        <div class="list-icon bg-success-light">
-            <i class="bi bi-check-circle-fill"></i>
+        <div class="list-icon bg-{{ item.status_display.class }}-light">
+            <i class="bi bi-{{ item.status_display.icon }}"></i>
         </div>
         <div class="list-content">
-            <div class="list-title">Maria Santos</div>
+            <div class="list-title">{{ item.order.name }}</div>
             <div class="list-subtitle">
-                <span class="badge-vendedor">Carlos Silva</span>
-                3x de R$ 66,63
-            </div>
-        </div>
-        <div class="list-value">
-            <div class="list-amount text-success">R$ 199,90</div>
-            <div class="list-date">Ontem</div>
-        </div>
-    </a>
-    
-    <a href="#" class="list-item">
-        <div class="list-icon bg-warning-light">
-            <i class="bi bi-clock-fill"></i>
-        </div>
-        <div class="list-content">
-            <div class="list-title">João Oliveira</div>
-            <div class="list-subtitle">
-                <span class="badge-vendedor">Ana Souza</span>
-                2x de R$ 74,95
-            </div>
-        </div>
-        <div class="list-value">
-            <div class="list-amount" style="color: var(--warning);">R$ 149,90</div>
-            <div class="list-date">Hoje</div>
-        </div>
-    </a>
-    
-    <a href="#" class="list-item">
-        <div class="list-icon bg-success-light">
-            <i class="bi bi-check-circle-fill"></i>
-        </div>
-        <div class="list-content">
-            <div class="list-title">Pedro Almeida</div>
-            <div class="list-subtitle">
-                <span class="badge-vendedor">Pedro Lima</span>
+                <span class="badge-status badge-{{ item.status_display.class }}">{{ item.status_display.label }}</span>
+                {% if item.order.installments > 1 %}
+                {{ item.order.installments }}x de R$ {{ item.order.total|floatformat:2 }}
+                {% else %}
                 À vista
+                {% endif %}
             </div>
         </div>
         <div class="list-value">
-            <div class="list-amount text-success">R$ 89,90</div>
-            <div class="list-date">2 dias</div>
+            <div class="list-amount" style="color: var(--{{ item.status_display.class }});">
+                R$ {{ item.link.amount|floatformat:2 }}
+            </div>
+            <div class="list-date">{{ item.days_ago }}</div>
         </div>
     </a>
-    
-    <a href="#" class="list-item">
-        <div class="list-icon bg-danger-light">
-            <i class="bi bi-x-circle-fill"></i>
-        </div>
-        <div class="list-content">
-            <div class="list-title">Fernanda Costa</div>
-            <div class="list-subtitle">
-                <span class="badge-vendedor">Carlos Silva</span>
-                3x de R$ 99,97
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Estatísticas de Conversão -->
+<div class="row g-3 mb-4">
+    <div class="col-6">
+        <div class="card-app p-3">
+            <div class="conversion-card">
+                <i class="bi bi-graph-up-arrow conversion-icon"></i>
+                <div class="conversion-value">{{ taxa_conversao|default:"0" }}%</div>
+                <div class="conversion-label">Taxa de Conversão</div>
             </div>
         </div>
-        <div class="list-value">
-            <div class="list-amount" style="color: var(--danger);">R$ 299,90</div>
-            <div class="list-date">3 dias</div>
+    </div>
+    <div class="col-6">
+        <div class="card-app p-3">
+            <div class="conversion-card">
+                <i class="bi bi-people conversion-icon"></i>
+                <div class="conversion-value">{{ total_sellers|default:"0" }}</div>
+                <div class="conversion-label">Vendedores Ativos</div>
+            </div>
         </div>
+    </div>
+</div>
+
+{% if not total_links_criados %}
+<!-- Estado vazio -->
+<div class="empty-state">
+    <i class="bi bi-link-45deg"></i>
+    <h3>Nenhum link criado ainda</h3>
+    <p>Comece criando seu primeiro link de pagamento</p>
+    <a href="#" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Criar Primeiro Link
     </a>
 </div>
-
-<!-- Seção de vendedores reformulada com visual melhor -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="section-title mb-0">Equipe de Vendedores</p>
-    <a href="#" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Gerenciar</a>
-</div>
-
-<div class="vendedores-grid mb-4">
-    <!-- Vendedor 1 -->
-    <div class="vendedor-card">
-        <div class="vendedor-header">
-            <div class="vendedor-avatar-lg" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">CS</div>
-            <a href="#" class="vendedor-whatsapp" title="WhatsApp">
-                <i class="bi bi-whatsapp"></i>
-            </a>
-        </div>
-        <div class="vendedor-info">
-            <h6>Carlos Silva</h6>
-            <span class="vendedor-stats">18 links • 78%</span>
-        </div>
-        <div class="vendedor-valor">
-            <span class="valor">R$ 4.520</span>
-            <span class="label">vendidos</span>
-        </div>
-    </div>
-    
-    <!-- Vendedor 2 -->
-    <div class="vendedor-card">
-        <div class="vendedor-header">
-            <div class="vendedor-avatar-lg" style="background: linear-gradient(135deg, #22c55e, #16a34a);">AS</div>
-            <a href="#" class="vendedor-whatsapp" title="WhatsApp">
-                <i class="bi bi-whatsapp"></i>
-            </a>
-        </div>
-        <div class="vendedor-info">
-            <h6>Ana Souza</h6>
-            <span class="vendedor-stats">15 links • 67%</span>
-        </div>
-        <div class="vendedor-valor">
-            <span class="valor">R$ 3.890</span>
-            <span class="label">vendidos</span>
-        </div>
-    </div>
-    
-    <!-- Vendedor 3 -->
-    <div class="vendedor-card">
-        <div class="vendedor-header">
-            <div class="vendedor-avatar-lg" style="background: linear-gradient(135deg, #f97316, #ea580c);">PL</div>
-            <a href="#" class="vendedor-whatsapp" title="WhatsApp">
-                <i class="bi bi-whatsapp"></i>
-            </a>
-        </div>
-        <div class="vendedor-info">
-            <h6>Pedro Lima</h6>
-            <span class="vendedor-stats">15 links • 53%</span>
-        </div>
-        <div class="vendedor-valor">
-            <span class="valor">R$ 4.040</span>
-            <span class="label">vendidos</span>
-        </div>
-    </div>
-    
-    <!-- Card para adicionar vendedor -->
-    <a href="#" class="vendedor-card vendedor-add">
-        <div class="add-icon">
-            <i class="bi bi-plus-lg"></i>
-        </div>
-        <span>Adicionar</span>
-    </a>
-</div>
-
-<!-- Gráfico visual simples dos últimos 7 dias -->
-<p class="section-title">Últimos 7 dias</p>
-<div class="card-app p-3 mb-4">
-    <div class="grafico-barras">
-        <div class="grafico-dia">
-            <div class="barra-container">
-                <div class="barra" style="height: 40%;"></div>
-            </div>
-            <span class="dia-label">Seg</span>
-        </div>
-        <div class="grafico-dia">
-            <div class="barra-container">
-                <div class="barra" style="height: 65%;"></div>
-            </div>
-            <span class="dia-label">Ter</span>
-        </div>
-        <div class="grafico-dia">
-            <div class="barra-container">
-                <div class="barra" style="height: 50%;"></div>
-            </div>
-            <span class="dia-label">Qua</span>
-        </div>
-        <div class="grafico-dia">
-            <div class="barra-container">
-                <div class="barra" style="height: 80%;"></div>
-            </div>
-            <span class="dia-label">Qui</span>
-        </div>
-        <div class="grafico-dia">
-            <div class="barra-container">
-                <div class="barra" style="height: 95%;"></div>
-            </div>
-            <span class="dia-label">Sex</span>
-        </div>
-        <div class="grafico-dia">
-            <div class="barra-container">
-                <div class="barra" style="height: 70%;"></div>
-            </div>
-            <span class="dia-label">Sáb</span>
-        </div>
-        <div class="grafico-dia hoje">
-            <div class="barra-container">
-                <div class="barra barra-hoje" style="height: 55%;"></div>
-            </div>
-            <span class="dia-label">Hoje</span>
-        </div>
-    </div>
-    <div class="d-flex justify-content-between mt-3 pt-3" style="border-top: 1px solid var(--gray-100);">
-        <div>
-            <span style="font-size: 0.75rem; color: var(--gray-500);">Esta semana</span>
-            <div style="font-size: 1.1rem; font-weight: 700; color: var(--gray-900);">R$ 3.240,00</div>
-        </div>
-        <div class="text-end">
-            <span style="font-size: 0.75rem; color: var(--gray-500);">Semana passada</span>
-            <div style="font-size: 1.1rem; font-weight: 600; color: var(--gray-500);">R$ 2.890,00</div>
-        </div>
-    </div>
-</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Ações Rápidas Grid */
+    /* Métricas */
+    .metric-label {
+        font-size: 0.7rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        line-height: 1;
+    }
+    
+    .metric-trend {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-bottom: 2px;
+    }
+    
+    .metric-trend.positive {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success);
+    }
+    
+    .metric-trend.negative {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+    
+    .metric-progress {
+        height: 4px;
+        background: var(--gray-100);
+        border-radius: 2px;
+        margin-top: 8px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.3s;
+    }
+    
+    .metric-subtitle {
+        font-size: 0.7rem;
+        color: var(--gray-500);
+        margin-top: 6px;
+    }
+    
+    /* Grid de Status */
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .status-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .status-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .status-success .status-icon {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success);
+    }
+    
+    .status-warning .status-icon {
+        background: rgba(249, 115, 22, 0.1);
+        color: var(--warning);
+    }
+    
+    .status-danger .status-icon {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+    
+    .status-info .status-icon {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+    
+    .status-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        line-height: 1;
+    }
+    
+    .status-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-top: 2px;
+    }
+    
+    /* Ações Rápidas */
     .acoes-rapidas {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -353,7 +373,7 @@
         text-decoration: none;
         padding: 16px 8px;
         background: white;
-        border-radius: 16px;
+        border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         transition: all 0.2s;
     }
@@ -366,7 +386,7 @@
     .acao-icon {
         width: 48px;
         height: 48px;
-        border-radius: 14px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -384,175 +404,14 @@
         text-align: center;
     }
     
-    /* Mini stats em linha */
-    .mini-stat {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        background: white;
-        padding: 8px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        color: var(--gray-600);
-        white-space: nowrap;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    
-    .mini-stat strong {
-        color: var(--gray-900);
-    }
-    
-    /* Badge do vendedor */
-    .badge-vendedor {
-        display: inline-block;
-        background: var(--gray-100);
-        color: var(--gray-600);
-        font-size: 0.65rem;
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-right: 6px;
-        font-weight: 600;
-    }
-    
-    /* Grid de vendedores */
-    .vendedores-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-    
-    .vendedor-card {
-        background: white;
-        border-radius: 16px;
-        padding: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        text-decoration: none;
-    }
-    
-    .vendedor-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 12px;
-    }
-    
-    .vendedor-avatar-lg {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 700;
-        font-size: 1rem;
-    }
-    
-    .vendedor-whatsapp {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: rgba(37, 211, 102, 0.1);
-        color: #25D366;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        text-decoration: none;
-        transition: all 0.2s;
-    }
-    
-    .vendedor-whatsapp:hover {
-        background: #25D366;
-        color: white;
-    }
-    
-    .vendedor-info h6 {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin: 0 0 2px 0;
-    }
-    
-    .vendedor-stats {
-        font-size: 0.7rem;
-        color: var(--gray-500);
-    }
-    
-    .vendedor-valor {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid var(--gray-100);
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-    }
-    
-    .vendedor-valor .valor {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--success);
-    }
-    
-    .vendedor-valor .label {
-        font-size: 0.7rem;
-        color: var(--gray-500);
-    }
-    
-    /* Card adicionar vendedor */
-    .vendedor-add {
-        border: 2px dashed var(--gray-200);
-        background: transparent;
-        box-shadow: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 140px;
-        transition: all 0.2s;
-    }
-    
-    .vendedor-add:hover {
-        border-color: var(--primary);
-        background: rgba(99, 102, 241, 0.02);
-    }
-    
-    .vendedor-add .add-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: var(--gray-100);
-        color: var(--gray-400);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 8px;
-        transition: all 0.2s;
-    }
-    
-    .vendedor-add:hover .add-icon {
-        background: var(--primary);
-        color: white;
-    }
-    
-    .vendedor-add span {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--gray-400);
-    }
-    
-    .vendedor-add:hover span {
-        color: var(--primary);
-    }
-    
-    /* Gráfico de barras simples */
+    /* Gráfico de Barras */
     .grafico-barras {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        height: 100px;
-        gap: 8px;
+        height: 120px;
+        gap: 6px;
+        margin-bottom: 16px;
     }
     
     .grafico-dia {
@@ -560,7 +419,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
     
     .barra-container {
@@ -573,8 +432,8 @@
     .barra {
         width: 100%;
         background: linear-gradient(180deg, var(--primary), #818cf8);
-        border-radius: 6px 6px 2px 2px;
-        min-height: 8px;
+        border-radius: 4px 4px 2px 2px;
+        min-height: 4px;
         transition: all 0.3s;
     }
     
@@ -585,12 +444,124 @@
     .dia-label {
         font-size: 0.65rem;
         color: var(--gray-500);
+        font-weight: 600;
+    }
+    
+    .dia-valor {
+        font-size: 0.7rem;
+        color: var(--gray-400);
         font-weight: 500;
     }
     
-    .grafico-dia.hoje .dia-label {
+    .grafico-dia.hoje .dia-label,
+    .grafico-dia.hoje .dia-valor {
         color: var(--success);
         font-weight: 700;
+    }
+    
+    .grafico-footer {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 16px;
+        border-top: 1px solid var(--gray-100);
+    }
+    
+    .footer-label {
+        font-size: 0.7rem;
+        color: var(--gray-500);
+    }
+    
+    .footer-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-top: 4px;
+    }
+    
+    /* Badge Status */
+    .badge-status {
+        display: inline-block;
+        font-size: 0.65rem;
+        padding: 3px 8px;
+        border-radius: 4px;
+        margin-right: 6px;
+        font-weight: 600;
+    }
+    
+    .badge-success {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success);
+    }
+    
+    .badge-warning {
+        background: rgba(249, 115, 22, 0.1);
+        color: var(--warning);
+    }
+    
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+    
+    .badge-info {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+    
+    .badge-secondary {
+        background: rgba(107, 114, 128, 0.1);
+        color: var(--gray-600);
+    }
+    
+    /* Conversion Cards */
+    .conversion-card {
+        text-align: center;
+    }
+    
+    .conversion-icon {
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 8px;
+    }
+    
+    .conversion-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 4px;
+    }
+    
+    .conversion-label {
+        font-size: 0.7rem;
+        color: var(--gray-500);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gray-300);
+        margin-bottom: 16px;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+        color: var(--gray-500);
+        margin-bottom: 24px;
     }
     
     /* Responsivo */
@@ -599,7 +570,7 @@
             grid-template-columns: repeat(2, 1fr);
         }
         
-        .vendedores-grid {
+        .status-grid {
             grid-template-columns: 1fr;
         }
     }

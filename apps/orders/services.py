@@ -52,3 +52,4 @@ def get_order(order_id):
 # Filtros genéricos
 def filter_orders(**filters):
     return Order.objects.filter(**filters)
+
