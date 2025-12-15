@@ -5,7 +5,8 @@
 
 {% block content %}
 <div class="success-page">
-    <!-- Ícone de Sucesso -->
+
+    <!-- Header -->
     <div class="success-header">
         <div class="success-icon-lg">
             <i class="bi bi-check-lg"></i>
@@ -13,23 +14,27 @@
         <h2>Link Criado!</h2>
         <p>Seu link de pagamento está pronto para ser enviado</p>
     </div>
-    
-    <!-- Card com Resumo -->
+
+    <!-- Card Resumo -->
     <div class="card-app mb-3">
         <div class="card-body">
-            <!-- Valor Total -->
+
             <div class="text-center mb-4">
                 <span class="valor-label">Valor do Link</span>
                 <div class="valor-destaque">R$ {{ order.total }}</div>
-                {% widthratio order.total order.installments 1 as parcela_bruta %}
-                <span class="parcelas-info">
-                    em até {{ order.installments }}x 
-                    de R$ {{ parcela_bruta|floatformat:2 }} 
-                    sem juros
-                </span>
+
+                {% if order.installments %}
+                    {% widthratio order.total order.installments 1 as parcela_bruta %}
+                    <span class="parcelas-info">
+                        em até {{ order.installments }}x
+                        de R$ {{ parcela_bruta|floatformat:2 }}
+                        sem juros
+                    </span>
+                {% else %}
+                    <span class="parcelas-info">Pagamento à vista</span>
+                {% endif %}
             </div>
-            
-            <!-- Detalhes -->
+
             <div class="detalhes-resumo">
                 <div class="detalhe-item">
                     <span class="detalhe-label">Cliente</span>
@@ -48,8 +53,14 @@
                     <span class="detalhe-valor">R$ {{ order.value_freight }}</span>
                 </div>
                 <div class="detalhe-item">
-                    <span class="detalhe-label">Numero de parcelas</span>
-                    <span class="detalhe-valor">{{ order.installments }}x sem juros</span>
+                    <span class="detalhe-label">Parcelas</span>
+                    <span class="detalhe-valor">
+                        {% if order.installments %}
+                            {{ order.installments }}x sem juros
+                        {% else %}
+                            À vista
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="detalhe-item">
                     <span class="detalhe-label">Valor Final</span>
@@ -58,337 +69,215 @@
             </div>
         </div>
     </div>
-    
-    <!-- Link Copiável -->
+
+    <!-- Card Link -->
     <div class="card-app mb-4">
         <div class="card-body">
             <label class="form-label-sm mb-2">Link de Pagamento</label>
-            <div class="link-box">
-                <input type="text" class="link-input" id="linkGerado" value="{{payment_links}}" readonly>
-                <button type="button" class="btn-copiar" id="btnCopiar">
-                    <i class="bi bi-copy"></i>
-                </button>
-            </div>
-            <div class="text-center mt-2">
-                <small class="msg-copiado" id="msgCopiado">
-                    <i class="bi bi-check-circle-fill me-1"></i>Link copiado!
-                </small>
-            </div>
+
+            {% if payment_link %}
+                <div class="link-box">
+                    <input type="text"
+                           class="link-input"
+                           id="linkGerado"
+                           value="{{ payment_link.url_link }}"
+                           readonly>
+
+                    <button type="button" class="btn-copiar" id="btnCopiar">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                </div>
+
+                <div class="text-center mt-2">
+                    <small class="msg-copiado" id="msgCopiado">
+                        <i class="bi bi-check-circle-fill me-1"></i>Link copiado!
+                    </small>
+                </div>
+            {% else %}
+                <p class="text-danger text-center">
+                    Nenhum link de pagamento encontrado.
+                </p>
+            {% endif %}
         </div>
     </div>
-    
-    <!-- Botões de Ação -->
+
+    <!-- Ações -->
     <div class="acoes-grid">
         <button type="button" class="btn-acao btn-whatsapp" id="btnWhatsApp">
             <i class="bi bi-whatsapp"></i>
             <span>Enviar no WhatsApp</span>
         </button>
-        
+
         <button type="button" class="btn-acao btn-compartilhar" id="btnCompartilhar">
             <i class="bi bi-share"></i>
             <span>Compartilhar</span>
         </button>
     </div>
-    
-    <!-- Botão Novo Link -->
+
+    <!-- Criar Novo -->
     <div class="d-grid mt-4">
-        <a href="#" class="btn btn-app btn-outline-app">
+        <a href="{% url 'orders:order-create' %}" class="btn btn-app btn-outline-app">
             <i class="bi bi-plus-lg me-2"></i>Criar Novo Link
         </a>
     </div>
-    
-    <!-- Link para ver todos -->
+
+    <!-- Voltar -->
     <div class="text-center mt-3">
         <a href="#" class="link-voltar">
             <i class="bi bi-arrow-left me-1"></i>Ver todos os links
         </a>
     </div>
+
 </div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .success-page {
-        padding-top: 20px;
-    }
-    
-    /* Header de Sucesso */
-    .success-header {
-        text-align: center;
-        margin-bottom: 32px;
-    }
-    
-    .success-icon-lg {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 20px;
-        animation: scaleIn 0.4s ease;
-    }
-    
-    .success-icon-lg i {
-        font-size: 2.5rem;
-        color: white;
-    }
-    
-    @keyframes scaleIn {
-        0% { transform: scale(0); opacity: 0; }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); opacity: 1; }
-    }
-    
-    .success-header h2 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin-bottom: 8px;
-    }
-    
-    .success-header p {
-        color: var(--gray-500);
-        font-size: 0.95rem;
-        margin: 0;
-    }
-    
-    /* Valor em Destaque */
-    .valor-label {
-        font-size: 0.8rem;
-        color: var(--gray-500);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .valor-destaque {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        line-height: 1.2;
-        margin: 8px 0;
-    }
-    
-    .parcelas-info {
-        font-size: 0.9rem;
-        color: var(--success);
-        font-weight: 500;
-    }
-    
-    /* Detalhes Resumo */
-    .detalhes-resumo {
-        background: var(--gray-50);
-        border-radius: 12px;
-        padding: 16px;
-    }
-    
-    .detalhe-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--gray-100);
-    }
-    
-    .detalhe-item:last-child {
-        border-bottom: none;
-    }
-    
-    .detalhe-label {
-        color: var(--gray-500);
-        font-size: 0.9rem;
-    }
-    
-    .detalhe-valor {
-        font-weight: 600;
-        color: var(--gray-800);
-        font-size: 0.9rem;
-    }
-    
-    .form-label-sm {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--gray-500);
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-    }
-    
-    /* Link Box */
-    .link-box {
-        display: flex;
-        align-items: center;
-        background: var(--gray-50);
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1.5px solid var(--gray-200);
-    }
-    
-    .link-input {
-        flex: 1;
-        border: none;
-        background: transparent;
-        padding: 14px 16px;
-        font-size: 0.9rem;
-        color: var(--gray-700);
-        font-family: monospace;
-    }
-    
-    .link-input:focus {
-        outline: none;
-    }
-    
-    .btn-copiar {
-        background: var(--primary);
-        border: none;
-        padding: 14px 18px;
-        color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    
-    .btn-copiar:hover {
-        background: var(--primary-dark);
-    }
-    
-    .btn-copiar i {
-        font-size: 1.1rem;
-    }
-    
-    .msg-copiado {
-        color: var(--success);
-        font-weight: 500;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-    
-    .msg-copiado.show {
-        opacity: 1;
-    }
-    
-    /* Botões de Ação */
-    .acoes-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-    
-    .btn-acao {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px 16px;
-        border-radius: 16px;
-        border: none;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        gap: 8px;
-    }
-    
-    .btn-acao i {
-        font-size: 1.5rem;
-    }
-    
-    .btn-acao span {
-        font-size: 0.85rem;
-    }
-    
-    .btn-whatsapp {
-        background: #25D366;
-        color: white;
-    }
-    
-    .btn-whatsapp:hover {
-        background: #1da851;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
-    }
-    
-    .btn-compartilhar {
-        background: var(--gray-100);
-        color: var(--gray-700);
-    }
-    
-    .btn-compartilhar:hover {
-        background: var(--gray-200);
-    }
-    
-    /* Link Voltar */
-    .link-voltar {
-        color: var(--gray-500);
-        text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: color 0.2s;
-    }
-    
-    .link-voltar:hover {
-        color: var(--primary);
-    }
-    
-    /* Btn Outline App */
-    .btn-outline-app {
-        background: transparent;
-        border: 2px solid var(--gray-200);
-        color: var(--gray-700);
-    }
-    
-    .btn-outline-app:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: rgba(99, 102, 241, 0.03);
-    }
+.success-page {
+    padding-top: 20px;
+}
+
+/* Header */
+.success-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.success-icon-lg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: scaleIn 0.4s ease;
+}
+
+.success-icon-lg i {
+    font-size: 2.5rem;
+    color: #fff;
+}
+
+@keyframes scaleIn {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Valor */
+.valor-label {
+    font-size: .8rem;
+    color: var(--gray-500);
+    text-transform: uppercase;
+}
+
+.valor-destaque {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 8px 0;
+}
+
+.parcelas-info {
+    font-size: .9rem;
+    color: var(--success);
+}
+
+/* Detalhes */
+.detalhes-resumo {
+    background: var(--gray-50);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.detalhe-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.detalhe-item:last-child {
+    border-bottom: none;
+}
+
+/* Link */
+.link-box {
+    display: flex;
+    border-radius: 12px;
+    border: 1.5px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.link-input {
+    flex: 1;
+    border: none;
+    padding: 14px 16px;
+    background: transparent;
+    font-family: monospace;
+}
+
+.link-input:focus {
+    outline: none;
+}
+
+.btn-copiar {
+    background: var(--primary);
+    border: none;
+    color: #fff;
+    padding: 14px 18px;
+}
+
+.msg-copiado {
+    opacity: 0;
+    color: var(--success);
+    transition: opacity .3s;
+}
+
+.msg-copiado.show {
+    opacity: 1;
+}
+
+/* Ações */
+.acoes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.btn-acao {
+    padding: 20px 16px;
+    border-radius: 16px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Botões */
+.btn-whatsapp {
+    background: #25D366;
+    color: #fff;
+}
+
+.btn-compartilhar {
+    background: var(--gray-100);
+}
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const btnCopiar = document.getElementById('btnCopiar');
-    const btnWhatsApp = document.getElementById('btnWhatsApp');
-    const btnCompartilhar = document.getElementById('btnCompartilhar');
-    const msgCopiado = document.getElementById('msgCopiado');
+document.addEventListener('DOMContentLoaded', function () {
     const linkGerado = document.getElementById('linkGerado');
-    
-    // Tentar recuperar dados do sessionStorage (demo)
-    const dadosLink = JSON.parse(sessionStorage.getItem('linkCriado') || 'null');
-    
-    // Copiar link
-    btnCopiar.addEventListener('click', function() {
+    const btnCopiar = document.getElementById('btnCopiar');
+    const msgCopiado = document.getElementById('msgCopiado');
+
+    btnCopiar?.addEventListener('click', () => {
         linkGerado.select();
-        linkGerado.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(linkGerado.value);
-        
         msgCopiado.classList.add('show');
-        setTimeout(function() {
-            msgCopiado.classList.remove('show');
-        }, 2000);
-    });
-    
-    // WhatsApp - abre com o número do cliente se disponível
-    btnWhatsApp.addEventListener('click', function() {
-        const cliente = 'João da Silva'; // Em produção viria do backend
-        const valor = 'R$ 189,90';
-        const link = linkGerado.value;
-        
-        const mensagem = `Olá ${cliente}! 👋\n\nSegue seu link de pagamento no valor de *${valor}*:\n\n${link}\n\nQualquer dúvida estou à disposição!`;
-        const whatsappUrl = 'https://wa.me/?text=' + encodeURIComponent(mensagem);
-        window.open(whatsappUrl, '_blank');
-    });
-    
-    // Compartilhar (Web Share API)
-    btnCompartilhar.addEventListener('click', function() {
-        if (navigator.share) {
-            navigator.share({
-                title: 'Link de Pagamento',
-                text: 'Segue seu link de pagamento:',
-                url: linkGerado.value
-            });
-        } else {
-            // Fallback: copiar
-            btnCopiar.click();
-        }
+        setTimeout(() => msgCopiado.classList.remove('show'), 2000);
     });
 });
 </script>

@@ -1,5 +1,10 @@
+# =================================================================
+# apps/payments/models.py (CORRIGIDO: Payment usa OneToOneField)
+# =================================================================
 from apps.core.models import BaseModel
 from django.db import models
+from django.db.models import OneToOneField # Importação necessária
+
 
 PAYMENT_STATUS = (
     ("pending", "Pendente"),
@@ -15,6 +20,8 @@ PAYMENT_LINK_STATUS = (
     ("pending", "Pendente"),
     ("inactive", "Inativo"),
     ("expired", "Expirado"),
+    ("paid", "Pago"), # Adicionado para refletir o status final
+    ("canceled", "Cancelado"), # Adicionado para refletir o status final
 )
 
 
@@ -47,10 +54,11 @@ class PaymentLink(BaseModel):
 
 class Payment(BaseModel):
 
-    payment_link = models.ForeignKey(
+    # CORREÇÃO: OneToOneField garante unicidade (max. 1 Payment por Link)
+    payment_link = OneToOneField(
         "payments.PaymentLink",
         on_delete=models.CASCADE,
-        related_name="payments",
+        related_name="payment", # Nome singular
         verbose_name="Link de pagamento",
     )
     status = models.CharField(
@@ -65,6 +73,7 @@ class Payment(BaseModel):
     @property
     def order(self):
         return self.payment_link.order
+    
     class Meta:
         verbose_name = "Pagamento"
         verbose_name_plural = "Pagamentos"

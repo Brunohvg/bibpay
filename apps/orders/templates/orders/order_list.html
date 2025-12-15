@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Pedidos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <h1 class="page-title">Pedidos</h1>
+        <p class="text-muted mb-0">Gerencie suas vendas e links de pagamento.</p>
+    </div>
+    <a href="{% url 'orders:order-create' %}" class="btn btn-primary btn-add-new shadow-sm">
+        <i class="bi bi-plus-lg me-2"></i>Novo Link
+    </a>
+</div>
+
+<div class="filter-card card-app mb-4">
+    <div class="card-body p-4">
+        <form method="GET" class="row g-3">
+            <div class="col-12 d-md-none mb-2">
+                <span class="text-uppercase fw-bold text-muted small"><i class="bi bi-funnel-fill me-1"></i> Filtros</span>
+            </div>
+
+            {# 1. Vendedor (Ocupa mais espaço) #}
+            <div class="col-12 col-md-4">
+                <label for="seller_filter" class="form-label label-small">Vendedor</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <select name="seller" id="seller_filter" class="form-select">
+                        <option value="">Todos os vendedores</option>
+                        {% for seller in sellers %}
+                            <option value="{{ seller.pk }}" {% if request.GET.seller|slugify == seller.pk|slugify %}selected{% endif %}>
+                                {{ seller.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {# 2. Datas (Lado a lado no mobile para economizar altura) #}
+            <div class="col-6 col-md-3">
+                <label for="date_start" class="form-label label-small">Data Inicial</label>
+                <input type="date" name="date_start" id="date_start" class="form-control" value="{{ request.GET.date_start|default:'' }}">
+            </div>
+            
+            <div class="col-6 col-md-3">
+                <label for="date_end" class="form-label label-small">Data Final</label>
+                <input type="date" name="date_end" id="date_end" class="form-control" value="{{ request.GET.date_end|default:'' }}">
+            </div>
+
+            {# 3. Botões (Alinhados à direita no desktop, full width no mobile) #}
+            <div class="col-12 col-md-2 d-flex align-items-end">
+                <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <a href="{% url 'orders:order-list' %}" class="btn btn-light" data-bs-toggle="tooltip" title="Limpar Filtros">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if orders %}
+<div class="card-app card-table overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col" class="ps-4" style="min-width: 250px;">Pedido</th>
+                    <th scope="col" style="min-width: 120px;">Valor</th>
+                    <th scope="col" style="min-width: 140px;">Status</th>
+                    <th scope="col" style="min-width: 150px;">Vendedor</th>
+                    <th scope="col" style="min-width: 140px;">Data</th>
+                    <th scope="col" class="text-end pe-4" style="min-width: 100px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex flex-column">
+                            <a href="{% url 'orders:order-success' order.pk %}" class="fw-bold text-decoration-none text-dark mb-1">
+                                #{{ order.pk }}
+                            </a>
+                            <span class="text-muted small text-truncate" style="max-width: 200px;">
+                                {{ order.name }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="fw-bold text-dark">R$ {{ order.total|floatformat:2 }}</span>
+                    </td>
+
+                    <td>
+                        {% with link=order.prefetched_payment_links|first %}
+                            {% if link %}
+                                {% with payment=link.payment %}
+                                    {% if payment %}
+                                        {# Status baseados no Payment #}
+                                        {% if payment.status == 'paid' %}
+                                            <span class="status-pill status-success">
+                                                <i class="bi bi-check-circle-fill"></i> Pago
+                                            </span>
+                                        {% elif payment.status == 'pending' %}
+                                            <span class="status-pill status-warning">
+                                                <i class="bi bi-clock-fill"></i> Pendente
+                                            </span>
+                                        {% elif payment.status == 'canceled' or payment.status == 'failed' %}
+                                            <span class="status-pill status-danger">
+                                                <i class="bi bi-x-circle-fill"></i> Cancelado
+                                            </span>
+                                        {% elif payment.status == 'refunded' %}
+                                            <span class="status-pill status-info">
+                                                <i class="bi bi-arrow-return-left"></i> Reembolso
+                                            </span>
+                                        {% else %}
+                                            <span class="status-pill status-secondary">{{ payment.status }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        {# Status baseados no Link (sem pagamento ainda) #}
+                                        {% if link.status == 'active' or link.status == 'pending' %}
+                                            <span class="status-pill status-warning">
+                                                <i class="bi bi-hourglass-split"></i> Aguardando
+                                            </span>
+                                        {% elif link.status == 'expired' %}
+                                            <span class="status-pill status-secondary">
+                                                <i class="bi bi-dash-circle"></i> Expirado
+                                            </span>
+                                        {% elif link.status == 'canceled' %}
+                                            <span class="status-pill status-danger">
+                                                <i class="bi bi-x"></i> Link Canc.
+                                            </span>
+                                        {% else %}
+                                            <span class="status-pill status-secondary">{{ link.status }}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <span class="status-pill status-secondary">Sem Link</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-initials me-2">{{ order.seller.name|first|upper }}</div>
+                            <span class="text-dark small">{{ order.seller.name }}</span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="text-dark small">{{ order.created_at|date:"d/m/Y" }}</span>
+                            <span class="text-muted x-small">{{ order.created_at|date:"H:i" }}</span>
+                        </div>
+                    </td>
+
+                    <td class="text-end pe-4">
+                        <a href="{% url 'orders:order-success' order.pk %}" class="btn btn-sm btn-light btn-action" data-bs-toggle="tooltip" title="Ver Detalhes">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4">
+    <div class="text-muted small mb-2 mb-md-0">
+        Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} resultados
+    </div>
+    
+    <nav>
+        <ul class="pagination pagination-clean mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+            {% endif %}
+
+            {% for i in paginator.page_range %}
+                {% if page_obj.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% elif i > page_obj.number|add:'-2' and i < page_obj.number|add:'2' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}{% if query_params %}&{{ query_params }}{% endif %}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state-wrapper text-center py-5">
+    <div class="empty-state-icon mb-3">
+        <i class="bi bi-inbox"></i>
+    </div>
+    <h4 class="fw-bold text-dark">Nenhum pedido encontrado</h4>
+    <p class="text-muted mb-4">Tente ajustar os filtros ou crie um novo link.</p>
+    <a href="{% url 'orders:order-list' %}" class="btn btn-outline-primary me-2">Limpar Filtros</a>
+    <a href="{% url 'orders:order-create' %}" class="btn btn-primary">Novo Pedido</a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variáveis de Cores (Consistente com o Dashboard) */
+    :root {
+        --primary: #6366f1;
+        --primary-hover: #4f46e5;
+        --primary-soft: rgba(99, 102, 241, 0.1);
+        --success: #22c55e;
+        --success-soft: rgba(34, 197, 94, 0.1);
+        --warning: #f97316;
+        --warning-soft: rgba(249, 115, 22, 0.1);
+        --danger: #ef4444;
+        --danger-soft: rgba(239, 68, 68, 0.1);
+        --info: #3b82f6;
+        --info-soft: rgba(59, 130, 246, 0.1);
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+        --radius-card: 16px;
+        --radius-sm: 8px;
+    }
+
+    /* Títulos */
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        margin: 0;
+    }
+
+    /* Cards Gerais */
+    .card-app {
+        background: white;
+        border-radius: var(--radius-card);
+        border: 1px solid rgba(0,0,0,0.04);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Filtros */
+    .filter-card .form-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--gray-500);
+        margin-bottom: 0.35rem;
+        letter-spacing: 0.5px;
+    }
+    .filter-card .form-control, 
+    .filter-card .form-select,
+    .filter-card .input-group-text {
+        border-color: var(--gray-200);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .filter-card .form-control:focus, 
+    .filter-card .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px var(--primary-soft);
+    }
+    .input-group-merge .input-group-text {
+        background: #fff;
+        border-right: none;
+        color: var(--gray-400);
+    }
+    .input-group-merge .form-select {
+        border-left: none;
+    }
+
+    /* Tabela */
+    .table thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-500);
+        font-weight: 700;
+        border-bottom: 1px solid var(--gray-200);
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    .table tbody td {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Status Pills (Badges Modernas) */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .status-success { background: var(--success-soft); color: var(--success); }
+    .status-warning { background: var(--warning-soft); color: var(--warning); }
+    .status-danger { background: var(--danger-soft); color: var(--danger); }
+    .status-info { background: var(--info-soft); color: var(--info); }
+    .status-secondary { background: var(--gray-100); color: var(--gray-500); }
+
+    /* Avatar Initials */
+    .avatar-initials {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+    }
+
+    /* Botão de Ação na Tabela */
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-400);
+        transition: all 0.2s;
+    }
+    .btn-action:hover {
+        background: var(--primary-soft);
+        color: var(--primary);
+    }
+
+    /* Paginação Clean */
+    .pagination-clean .page-item .page-link {
+        border: none;
+        color: var(--gray-500);
+        border-radius: 8px;
+        margin: 0 2px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .pagination-clean .page-item.active .page-link {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 2px 4px var(--primary-soft);
+    }
+    .pagination-clean .page-item.disabled .page-link {
+        background: transparent;
+        color: var(--gray-200);
+    }
+    .pagination-clean .page-item .page-link:hover:not(.active) {
+        background: var(--gray-100);
+        color: var(--gray-800);
+    }
+
+    /* Empty State */
+    .empty-state-icon {
+        width: 64px;
+        height: 64px;
+        background: var(--gray-50);
+        color: var(--gray-400);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin: 0 auto;
+    }
+
+    /* Ajustes Específicos para Mobile */
+    @media (max-width: 767.98px) {
+        .page-title {
+            font-size: 1.25rem;
+        }
+        .btn-add-new {
+            width: 100%;
+        }
+        .card-body {
+            padding: 1rem !important;
+        }
+        .filter-card label {
+            font-size: 0.7rem;
+        }
+    }
+</style>
+{% endblock %}

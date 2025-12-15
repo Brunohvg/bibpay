@@ -1,0 +1,826 @@
+{% extends 'base.html' %}
+
+{% block title %}Recibo de Pagamento{% endblock %}
+
+{% block content %}
+<div class="receipt-wrapper">
+
+    <!-- CABEÇALHO PROFISSIONAL -->
+    <header class="receipt-header">
+        <div class="header-left">
+            <div class="brand-mark">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="header-info">
+                <h1>Comprovante de Pagamento</h1>
+                <span class="subtitle">Recibo oficial de transação</span>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <div class="receipt-id">
+                <span class="id-label">Recibo Nº</span>
+                <span class="id-number">#{{ payment.id|stringformat:"06d" }}</span>
+            </div>
+            <span class="receipt-date">{{ payment.payment_date|date:"d/m/Y às H:i" }}</span>
+        </div>
+    </header>
+
+    <!-- STATUS VERIFICADO -->
+    <div class="status-verified">
+        <div class="status-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <span class="status-text">Pagamento Confirmado</span>
+        <span class="status-badge">APROVADO</span>
+    </div>
+
+    <!-- VALOR PRINCIPAL -->
+    <section class="amount-display">
+        <span class="amount-label">Valor Total Pago</span>
+        <div class="amount-main">
+            <span class="currency">R$</span>
+            <span class="value">{{ payment.amount|floatformat:2 }}</span>
+        </div>
+        {% if order.installments > 1 %}
+        <span class="amount-detail">
+            Parcelado em {{ order.installments }}x de R$ {% widthratio payment.amount order.installments 1 %} sem juros
+        </span>
+        {% endif %}
+    </section>
+
+    <!-- INFORMAÇÕES EMPILHADAS -->
+    <div class="info-stack">
+        
+        <!-- PAGAMENTO -->
+        <section class="info-card">
+            <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 10H21M7 15H8M12 15H13M6 19H18C19.1046 19 20 18.1046 20 17V7C20 5.89543 19.1046 5 18 5H6C4.89543 5 4 5.89543 4 7V17C4 18.1046 4.89543 19 6 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Dados do Pagamento
+            </h3>
+            
+            <div class="info-rows">
+                <div class="info-row">
+                    <span class="row-label">ID da Transação</span>
+                    <span class="row-value">#{{ payment.id }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-label">ID do Link</span>
+                    <span class="row-value code">{{ payment.payment_link.id_link|truncatechars:15 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-label">Data e Hora</span>
+                    <span class="row-value">{{ payment.payment_date|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-label">Status</span>
+                    <span class="row-value status-tag">
+                        <span class="status-dot"></span>
+                        Pago
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- PEDIDO -->
+        <section class="info-card">
+            <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Informações do Pedido
+            </h3>
+            
+            <div class="info-rows">
+                <div class="info-row">
+                    <span class="row-label">Nº do Pedido</span>
+                    <span class="row-value">#{{ order.id|stringformat:"06d" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-label">Cliente</span>
+                    <span class="row-value">{{ order.name|truncatechars:25 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-label">Vendedor</span>
+                    <span class="row-value">{{ order.seller.name|truncatechars:25 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-label">Parcelamento</span>
+                    <span class="row-value">
+                        {% if order.installments > 1 %}
+                            {{ order.installments }}x s/ juros
+                        {% else %}
+                            À vista
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- RESUMO FINANCEIRO -->
+    <section class="financial-summary">
+        <h3 class="summary-header">Resumo Financeiro</h3>
+        
+        <div class="summary-rows">
+            <div class="summary-row">
+                <span class="summary-label">Valor do Produto</span>
+                <span class="summary-amount">R$ {{ order.value|floatformat:2 }}</span>
+            </div>
+            
+            <div class="summary-row">
+                <span class="summary-label">Valor do Frete</span>
+                <span class="summary-amount">R$ {{ order.value_freight|floatformat:2 }}</span>
+            </div>
+            
+            <div class="summary-divider"></div>
+            
+            <div class="summary-row total-row">
+                <span class="summary-label">Total Pago</span>
+                <span class="summary-amount total">R$ {{ payment.amount|floatformat:2 }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- VERIFICAÇÃO -->
+    <div class="verification-badge">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+            <path d="M9 12L11 14L15 10M12 2L3 7L12 12L21 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 17L12 22L21 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 12L12 17L21 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h4>Transação Verificada</h4>
+        <p>Este comprovante é válido e pode ser utilizado para fins de prestação de contas. A transação foi processada com sucesso.</p>
+    </div>
+
+    <!-- BOTÕES DE AÇÃO -->
+    <footer class="receipt-actions">
+        <button class="action-btn primary" id="print">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9V2H18V9M6 18H4C3.46957 18 2.96086 17.7893 2.58579 17.4142C2.21071 17.0391 2 16.5304 2 16V11C2 10.4696 2.21071 9.96086 2.58579 9.58579C2.96086 9.21071 3.46957 9 4 9H20C20.5304 9 21.0391 9.21071 21.4142 9.58579C21.7893 9.96086 22 10.4696 22 11V16C22 16.5304 21.7893 17.0391 21.4142 17.4142C21.0391 17.7893 20.5304 18 20 18H18M6 14H18V22H6V14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Imprimir</span>
+        </button>
+        
+        <button class="action-btn secondary" id="share">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M4 12V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V12M16 6L12 2M12 2L8 6M12 2V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Compartilhar</span>
+        </button>
+        
+        <button class="action-btn secondary" id="download">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 10L12 15M12 15L17 10M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Baixar PDF</span>
+        </button>
+    </footer>
+
+    <!-- RODAPÉ -->
+    <div class="receipt-footer">
+        <p>Este é um documento eletrônico e não necessita de assinatura física.</p>
+        <p class="footer-meta">Gerado automaticamente em {{ payment.payment_date|date:"d/m/Y às H:i" }}</p>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.receipt-wrapper {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    padding: 48px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ===== CABEÇALHO ===== */
+.receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 32px;
+    margin-bottom: 32px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.header-left {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.brand-mark {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+}
+
+.header-info h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.header-right {
+    text-align: right;
+}
+
+.receipt-id {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.id-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.id-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: 'Courier New', monospace;
+}
+
+.receipt-date {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* ===== STATUS ===== */
+.status-verified {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 2px solid #bbf7d0;
+    border-radius: 16px;
+    margin-bottom: 32px;
+}
+
+.status-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #16a34a;
+}
+
+.status-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #166534;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    background: #22c55e;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* ===== VALOR ===== */
+.amount-display {
+    text-align: center;
+    padding: 32px;
+    background: linear-gradient(to bottom, #fafafa, #ffffff);
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    margin-bottom: 32px;
+}
+
+.amount-label {
+    display: block;
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.amount-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.amount-main .currency {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 6px;
+}
+
+.amount-main .value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.amount-detail {
+    font-size: 0.9rem;
+    color: #16a34a;
+    font-weight: 500;
+}
+
+/* ===== INFO STACK (Empilhado para mobile) ===== */
+.info-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.info-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+}
+
+.card-title svg {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.info-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    min-height: 24px;
+}
+
+.row-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.row-value {
+    font-size: 0.85rem;
+    color: #0f172a;
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+    flex: 1;
+}
+
+.row-value.code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ===== RESUMO FINANCEIRO ===== */
+.financial-summary {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 32px;
+}
+
+.summary-header {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 20px 0;
+}
+
+.summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-label {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.summary-amount {
+    font-size: 1rem;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.summary-divider {
+    height: 2px;
+    background: #e2e8f0;
+    margin: 8px 0;
+}
+
+.total-row {
+    padding-top: 12px;
+}
+
+.total-row .summary-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.total-row .summary-amount {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #22c55e;
+}
+
+/* ===== VERIFICAÇÃO ===== */
+.verification-badge {
+    text-align: center;
+    padding: 32px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 2px solid #bfdbfe;
+    border-radius: 16px;
+    margin-bottom: 32px;
+}
+
+.verification-badge svg {
+    color: #3b82f6;
+    margin-bottom: 16px;
+}
+
+.verification-badge h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 0 0 12px 0;
+}
+
+.verification-badge p {
+    font-size: 0.9rem;
+    color: #1e3a8a;
+    line-height: 1.6;
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+/* ===== AÇÕES ===== */
+.receipt-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+}
+
+.action-btn.secondary {
+    background: white;
+    color: #475569;
+    border: 2px solid #e2e8f0;
+}
+
+.action-btn.secondary:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-2px);
+}
+
+/* ===== RODAPÉ ===== */
+.receipt-footer {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 2px solid #f1f5f9;
+}
+
+.receipt-footer p {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin: 0 0 8px 0;
+}
+
+.footer-meta {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    font-style: italic;
+}
+
+/* ===== PRINT ===== */
+@media print {
+    .receipt-wrapper {
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+    }
+    
+    .receipt-actions {
+        display: none;
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .receipt-wrapper {
+        padding: 24px 16px;
+        margin: 16px;
+        border-radius: 16px;
+    }
+    
+    .receipt-header {
+        flex-direction: column;
+        gap: 16px;
+        padding-bottom: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .header-left {
+        width: 100%;
+    }
+    
+    .brand-mark {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .header-info h1 {
+        font-size: 1.25rem;
+    }
+    
+    .header-right {
+        text-align: left;
+        width: 100%;
+    }
+    
+    .id-number {
+        font-size: 1.25rem;
+    }
+    
+    .status-verified {
+        padding: 12px 20px;
+        gap: 10px;
+    }
+    
+    .status-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .status-text {
+        font-size: 0.9rem;
+    }
+    
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 3px 10px;
+    }
+    
+    .amount-display {
+        padding: 24px 20px;
+    }
+    
+    .amount-main .currency {
+        font-size: 1.5rem;
+        margin-top: 4px;
+    }
+    
+    .amount-main .value {
+        font-size: 2.5rem;
+    }
+    
+    .amount-detail {
+        font-size: 0.85rem;
+    }
+    
+    .info-card {
+        padding: 16px;
+    }
+    
+    .card-title {
+        font-size: 0.9rem;
+        margin-bottom: 14px;
+    }
+    
+    .info-rows {
+        gap: 10px;
+    }
+    
+    .row-label {
+        font-size: 0.75rem;
+    }
+    
+    .row-value {
+        font-size: 0.8rem;
+    }
+    
+    .financial-summary {
+        padding: 20px 16px;
+    }
+    
+    .summary-header {
+        font-size: 1rem;
+        margin-bottom: 16px;
+    }
+    
+    .summary-row {
+        gap: 12px;
+    }
+    
+    .summary-label {
+        font-size: 0.85rem;
+    }
+    
+    .summary-amount {
+        font-size: 0.9rem;
+    }
+    
+    .total-row .summary-label {
+        font-size: 1rem;
+    }
+    
+    .total-row .summary-amount {
+        font-size: 1.25rem;
+    }
+    
+    .verification-badge {
+        padding: 24px 16px;
+    }
+    
+    .verification-badge svg {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .verification-badge h4 {
+        font-size: 1rem;
+    }
+    
+    .verification-badge p {
+        font-size: 0.85rem;
+    }
+    
+    .receipt-actions {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .action-btn {
+        padding: 12px 16px;
+        font-size: 0.85rem;
+    }
+    
+    .action-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .receipt-footer {
+        padding-top: 20px;
+    }
+    
+    .receipt-footer p {
+        font-size: 0.8rem;
+    }
+    
+    .footer-meta {
+        font-size: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('print').onclick = () => window.print();
+
+document.getElementById('share').onclick = () => {
+    const text = `📄 COMPROVANTE DE PAGAMENTO
+
+🆔 Recibo: #{{ payment.id|stringformat:"06d" }}
+💰 Valor: R$ {{ payment.amount|floatformat:2 }}
+📅 Data: {{ payment.payment_date|date:"d/m/Y às H:i" }}
+✅ Status: Pagamento Aprovado
+
+🛒 Pedido: #{{ order.id }}
+👤 Cliente: {{ order.name }}
+👨‍💼 Vendedor: {{ order.seller.name }}`;
+
+    if (navigator.share) {
+        navigator.share({ title: 'Comprovante', text });
+    } else {
+        navigator.clipboard.writeText(text);
+        alert('✓ Recibo copiado!');
+    }
+};
+
+document.getElementById('download').onclick = () => {
+    alert('📥 Use: Imprimir → Salvar como PDF');
+};
+</script>
+{% endblock %}

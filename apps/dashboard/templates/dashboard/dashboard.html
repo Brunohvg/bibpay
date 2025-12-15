@@ -20,17 +20,18 @@
     <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
-                <p style="font-size: 0.8rem; opacity: 0.85; margin-bottom: 4px;">Volume Total Processado</p>
-                <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">R$ {{ volume_total|floatformat:2|default:"0,00" }}</h2>
-                <p style="font-size: 0.75rem; opacity: 0.75; margin-top: 4px;">Últimos 30 dias</p>
+                <p style="font-size: 0.8rem; opacity: 0.85; margin-bottom: 4px;">Volume Recebido</p>
+                <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">R$ {{ volume_processado|floatformat:2|default:"0,00" }}</h2>
+                <p style="font-size: 0.75rem; opacity: 0.75; margin-top: 4px;">Pagamentos confirmados</p>
             </div>
-            <a href="#" class="btn btn-light btn-sm" style="border-radius: 10px; font-weight: 600;">
-                <i class="bi bi-plus-lg me-1"></i>Criar Link
+            <a href="{% url 'orders:order-create' %}" class="btn btn-light btn-sm" style="border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-plus-lg me-1"></i>Novo Link
             </a>
         </div>
         <div class="d-flex gap-3 flex-wrap" style="font-size: 0.8rem; opacity: 0.9;">
-            <span><i class="bi bi-link-45deg me-1"></i>{{ total_links_criados|default:"0" }} links criados</span>
-            <span><i class="bi bi-graph-up me-1"></i>Taxa conversão {{ taxa_conversao|default:"0" }}%</span>
+            <span><i class="bi bi-link-45deg me-1"></i>{{ total_links_criados }} criados</span>
+            <span><i class="bi bi-check-circle me-1"></i>{{ taxa_conversao }}% convertidos</span>
+            <span><i class="bi bi-hourglass-split me-1"></i>R$ {{ valor_em_aberto|floatformat:2 }} pendentes</span>
         </div>
     </div>
 </div>
@@ -39,191 +40,245 @@
 <div class="row g-3 mb-4">
     <div class="col-6">
         <div class="card-app h-100 p-3">
-            <div class="metric-label">Links Ativos</div>
+            <div class="metric-header">
+                <i class="bi bi-lightning-charge-fill metric-icon"></i>
+                <span class="metric-label">Conversão</span>
+            </div>
             <div class="d-flex align-items-end gap-2 mb-2">
-                <span class="metric-value">{{ total_links_ativos|default:"0" }}</span>
-                {% if taxa_conversao %}
-                <span class="metric-trend positive">+{{ total_pagos|default:"0" }}</span>
-                {% endif %}
+                <span class="metric-value">{{ taxa_conversao|default:"0" }}%</span>
+                <span class="metric-badge success">{{ total_pagos }} pagos</span>
             </div>
             <div class="metric-progress">
-                <div class="progress-bar" style="width: {{ taxa_conversao|default:"0" }}%; background: var(--primary);"></div>
+                <div class="progress-bar" style="width: {{ taxa_conversao|default:"0" }}%; background: var(--success);"></div>
             </div>
-            <div class="metric-subtitle">{{ taxa_conversao|default:"0" }}% de conversão</div>
+            <div class="metric-detail">{{ total_pagos }} de {{ total_links_criados }} links</div>
         </div>
     </div>
     <div class="col-6">
         <div class="card-app h-100 p-3">
-            <div class="metric-label">Ticket Médio</div>
+            <div class="metric-header">
+                <i class="bi bi-currency-dollar metric-icon"></i>
+                <span class="metric-label">Ticket Médio</span>
+            </div>
             <div class="d-flex align-items-end gap-2 mb-2">
                 <span class="metric-value">R$ {{ ticket_medio|floatformat:0|default:"0" }}</span>
-                {% if week_growth_positive %}
-                <span class="metric-trend positive">+{{ week_growth|default:"0" }}%</span>
-                {% else %}
-                <span class="metric-trend negative">{{ week_growth|default:"0" }}%</span>
+                {% if week_growth %}
+                    {% if week_growth_positive %}
+                    <span class="metric-badge success">+{{ week_growth }}%</span>
+                    {% else %}
+                    <span class="metric-badge danger">{{ week_growth }}%</span>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="metric-progress">
-                <div class="progress-bar" style="width: 65%; background: var(--success);"></div>
+                <div class="progress-bar" style="width: 70%; background: var(--primary);"></div>
             </div>
-            <div class="metric-subtitle">vs. mês anterior</div>
+            <div class="metric-detail">comparado à semana anterior</div>
         </div>
     </div>
 </div>
 
-<!-- Status dos Links -->
-<p class="section-title">Resumo de Status</p>
-<div class="status-grid mb-4">
-    <div class="status-card status-success">
-        <div class="status-icon">
-            <i class="bi bi-check-circle-fill"></i>
+<!-- Status Cards Melhorados -->
+<p class="section-title">Status dos Pagamentos</p>
+<div class="status-grid-enhanced mb-4">
+    <div class="status-card-enhanced success">
+        <div class="status-content">
+            <i class="bi bi-check-circle-fill status-icon-lg"></i>
+            <div class="status-info">
+                <span class="status-value-lg">{{ total_pagos|default:"0" }}</span>
+                <span class="status-label-sm">Pagos</span>
+            </div>
         </div>
-        <div class="status-info">
-            <div class="status-value">{{ total_pagos|default:"0" }}</div>
-            <div class="status-label">Pagos</div>
-        </div>
+        <div class="status-amount">R$ {{ total_received|floatformat:2|default:"0,00" }}</div>
     </div>
     
-    <div class="status-card status-warning">
-        <div class="status-icon">
-            <i class="bi bi-clock-fill"></i>
+    <div class="status-card-enhanced warning">
+        <div class="status-content">
+            <i class="bi bi-clock-fill status-icon-lg"></i>
+            <div class="status-info">
+                <span class="status-value-lg">{{ total_links_ativos|default:"0" }}</span>
+                <span class="status-label-sm">Pendentes</span>
+            </div>
         </div>
-        <div class="status-info">
-            <div class="status-value">{{ total_pendentes|default:"0" }}</div>
-            <div class="status-label">Pendentes</div>
-        </div>
+        <div class="status-amount">R$ {{ valor_em_aberto|floatformat:2|default:"0,00" }}</div>
     </div>
     
-    <div class="status-card status-danger">
-        <div class="status-icon">
-            <i class="bi bi-x-circle-fill"></i>
+    <div class="status-card-enhanced danger">
+        <div class="status-content">
+            <i class="bi bi-x-circle-fill status-icon-lg"></i>
+            <div class="status-info">
+                <span class="status-value-lg">{{ total_cancelados|default:"0" }}</span>
+                <span class="status-label-sm">Cancelados</span>
+            </div>
         </div>
-        <div class="status-info">
-            <div class="status-value">{{ total_cancelados|default:"0" }}</div>
-            <div class="status-label">Cancelados</div>
-        </div>
+        <div class="status-amount">R$ {{ total_canceled|floatformat:2|default:"0,00" }}</div>
     </div>
     
-    <div class="status-card status-info">
-        <div class="status-icon">
-            <i class="bi bi-hourglass-split"></i>
+    <div class="status-card-enhanced info">
+        <div class="status-content">
+            <i class="bi bi-hourglass-split status-icon-lg"></i>
+            <div class="status-info">
+                <span class="status-value-lg">{{ total_links_expirados|default:"0" }}</span>
+                <span class="status-label-sm">Expirados</span>
+            </div>
         </div>
-        <div class="status-info">
-            <div class="status-value">{{ total_links_expirados|default:"0" }}</div>
-            <div class="status-label">Expirados</div>
-        </div>
+        <div class="status-amount text-muted">—</div>
     </div>
 </div>
 
-<!-- Ações Rápidas -->
-<p class="section-title">Funcionalidades</p>
-<div class="acoes-rapidas mb-4">
-    <a href="#" class="acao-btn">
-        <div class="acao-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
-            <i class="bi bi-link-45deg"></i>
+<!-- Ações Rápidas Melhoradas -->
+<p class="section-title">Ações Rápidas</p>
+<div class="actions-grid mb-4">
+    <a href="{% url 'orders:order-create' %}" class="action-card primary">
+        <div class="action-icon">
+            <i class="bi bi-plus-circle-fill"></i>
         </div>
-        <span>Criar Link</span>
+        <div class="action-content">
+            <span class="action-title">Criar Link</span>
+            <span class="action-subtitle">Novo link de pagamento</span>
+        </div>
+        <i class="bi bi-chevron-right action-arrow"></i>
     </a>
-    <a href="#" class="acao-btn">
-        <div class="acao-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-            <i class="bi bi-credit-card"></i>
+    
+    <a href="{% url 'orders:order-list' %}" class="action-card success">
+        <div class="action-icon">
+            <i class="bi bi-list-ul"></i>
         </div>
-        <span>Pedidos</span>
+        <div class="action-content">
+            <span class="action-title">Ver Pedidos</span>
+            <span class="action-subtitle">{{ total_links_criados }} no total</span>
+        </div>
+        <i class="bi bi-chevron-right action-arrow"></i>
     </a>
-    <a href="#" class="acao-btn">
-        <div class="acao-icon" style="background: rgba(249, 115, 22, 0.1); color: var(--warning);">
-            <i class="bi bi-graph-up"></i>
+    
+    <a href="#" class="action-card warning" onclick="alert('Funcionalidade em desenvolvimento'); return false;">
+        <div class="action-icon">
+            <i class="bi bi-truck"></i>
         </div>
-        <span>Relatórios</span>
-    </a>
-    <a href="#" class="acao-btn">
-        <div class="acao-icon" style="background: rgba(107, 114, 128, 0.1); color: var(--gray-600);">
-            <i class="bi bi-gear"></i>
+        <div class="action-content">
+            <span class="action-title">Calcular Frete</span>
+            <span class="action-subtitle">Em breve</span>
         </div>
-        <span>Configurar</span>
+        <i class="bi bi-chevron-right action-arrow"></i>
     </a>
 </div>
 
-<!-- Gráfico de Atividade -->
-<p class="section-title">Atividade dos Últimos 7 Dias</p>
-<div class="card-app p-3 mb-4">
-    <div class="grafico-barras">
+<!-- Gráfico Melhorado -->
+<p class="section-title">Desempenho Semanal</p>
+<div class="card-app p-4 mb-4">
+    {% if chart_data %}
+    <div class="chart-header mb-3">
+        <div>
+            <h6 class="chart-title">Links Criados</h6>
+            <p class="chart-subtitle">Últimos 7 dias</p>
+        </div>
+        <div class="chart-legend">
+            <span class="legend-item">
+                <span class="legend-dot today"></span>
+                Hoje
+            </span>
+            <span class="legend-item">
+                <span class="legend-dot normal"></span>
+                Outros dias
+            </span>
+        </div>
+    </div>
+    
+    <div class="grafico-barras-enhanced">
         {% for data in chart_data %}
-        <div class="grafico-dia {% if data.is_today %}hoje{% endif %}">
+        <div class="grafico-dia-enhanced {% if data.is_today %}hoje{% endif %}">
             <div class="barra-container">
-                <div class="barra {% if data.is_today %}barra-hoje{% endif %}" style="height: {{ data.height }}%;"></div>
+                <div class="barra-enhanced {% if data.is_today %}barra-hoje{% endif %}" 
+                     style="height: {% if data.height %}{{ data.height }}%{% else %}5{% endif %};"
+                     data-count="{{ data.count }}">
+                    <span class="barra-tooltip">{{ data.count }}</span>
+                </div>
             </div>
-            <span class="dia-label">{{ data.day }}</span>
-            <span class="dia-valor">{{ data.count }}</span>
+            <span class="dia-label-enhanced">{{ data.day }}</span>
         </div>
         {% endfor %}
     </div>
-    <div class="grafico-footer">
-        <div>
-            <span class="footer-label">Links esta semana</span>
-            <div class="footer-value">{{ this_week_total|floatformat:2|default:"0,00" }}</div>
+    
+    <div class="chart-footer">
+        <div class="chart-stat">
+            <span class="stat-label">Total da Semana</span>
+            <span class="stat-value success">R$ {{ this_week_total|floatformat:2|default:"0,00" }}</span>
         </div>
-        <div class="text-end">
-            <span class="footer-label">vs. semana anterior</span>
-            <div class="footer-value {% if week_growth_positive %}text-success{% else %}text-danger{% endif %}">
+        <div class="chart-divider"></div>
+        <div class="chart-stat">
+            <span class="stat-label">Crescimento</span>
+            <span class="stat-value {% if week_growth_positive %}success{% else %}danger{% endif %}">
                 {% if week_growth_positive %}+{% endif %}{{ week_growth|default:"0" }}%
-            </div>
+            </span>
         </div>
     </div>
+    {% else %}
+    <div class="empty-chart">
+        <i class="bi bi-graph-up"></i>
+        <p>Sem dados para exibir</p>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Links Recentes -->
+<!-- Links Recentes Melhorados -->
 {% if recent_links %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="section-title mb-0">Links Recentes</p>
-    <a href="#" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Ver todos</a>
+    <p class="section-title mb-0">Últimas Transações</p>
+    <a href="{% url 'orders:order-list' %}" class="link-view-all">
+        Ver todos
+        <i class="bi bi-arrow-right ms-1"></i>
+    </a>
 </div>
 
 <div class="card-app mb-4">
     {% for item in recent_links %}
-    <a href="#" class="list-item">
-        <div class="list-icon bg-{{ item.status_display.class }}-light">
+    <a href="{% url 'orders:order-success' item.order.pk %}" class="transaction-item">
+        <div class="transaction-icon bg-{{ item.status_display.class }}-light">
             <i class="bi bi-{{ item.status_display.icon }}"></i>
         </div>
-        <div class="list-content">
-            <div class="list-title">{{ item.order.name }}</div>
-            <div class="list-subtitle">
-                <span class="badge-status badge-{{ item.status_display.class }}">{{ item.status_display.label }}</span>
-                {% if item.order.installments > 1 %}
-                {{ item.order.installments }}x de R$ {{ item.order.total|floatformat:2 }}
-                {% else %}
-                À vista
-                {% endif %}
+        <div class="transaction-content">
+            <div class="transaction-header">
+                <span class="transaction-name">{{ item.order.name|truncatechars:30 }}</span>
+                <span class="transaction-amount" style="color: var(--{{ item.status_display.class }});">
+                    R$ {{ item.link.amount|floatformat:2 }}
+                </span>
             </div>
-        </div>
-        <div class="list-value">
-            <div class="list-amount" style="color: var(--{{ item.status_display.class }});">
-                R$ {{ item.link.amount|floatformat:2 }}
+            <div class="transaction-footer">
+                <span class="transaction-badge badge-{{ item.status_display.class }}">
+                    {{ item.status_display.label }}
+                </span>
+                <span class="transaction-details">
+                    {% if item.order.installments > 1 %}
+                        {{ item.order.installments }}x s/ juros
+                    {% else %}
+                        À vista
+                    {% endif %}
+                    • {{ item.days_ago }}
+                </span>
             </div>
-            <div class="list-date">{{ item.days_ago }}</div>
         </div>
     </a>
     {% endfor %}
 </div>
 {% endif %}
 
-<!-- Estatísticas de Conversão -->
+<!-- Cards Informativos -->
 <div class="row g-3 mb-4">
     <div class="col-6">
-        <div class="card-app p-3">
-            <div class="conversion-card">
-                <i class="bi bi-graph-up-arrow conversion-icon"></i>
-                <div class="conversion-value">{{ taxa_conversao|default:"0" }}%</div>
-                <div class="conversion-label">Taxa de Conversão</div>
+        <div class="info-card-mini">
+            <i class="bi bi-people-fill info-card-icon"></i>
+            <div class="info-card-content">
+                <span class="info-card-value">{{ total_sellers|default:"0" }}</span>
+                <span class="info-card-label">Vendedores</span>
             </div>
         </div>
     </div>
     <div class="col-6">
-        <div class="card-app p-3">
-            <div class="conversion-card">
-                <i class="bi bi-people conversion-icon"></i>
-                <div class="conversion-value">{{ total_sellers|default:"0" }}</div>
-                <div class="conversion-label">Vendedores Ativos</div>
+        <div class="info-card-mini">
+            <i class="bi bi-graph-up-arrow info-card-icon"></i>
+            <div class="info-card-content">
+                <span class="info-card-value">{{ taxa_conversao }}%</span>
+                <span class="info-card-label">Conversão</span>
             </div>
         </div>
     </div>
@@ -232,10 +287,12 @@
 {% if not total_links_criados %}
 <!-- Estado vazio -->
 <div class="empty-state">
-    <i class="bi bi-link-45deg"></i>
-    <h3>Nenhum link criado ainda</h3>
-    <p>Comece criando seu primeiro link de pagamento</p>
-    <a href="#" class="btn btn-primary">
+    <div class="empty-icon">
+        <i class="bi bi-link-45deg"></i>
+    </div>
+    <h3>Comece Agora</h3>
+    <p>Crie seu primeiro link de pagamento e comece a vender</p>
+    <a href="{% url 'orders:order-create' %}" class="btn btn-primary btn-lg">
         <i class="bi bi-plus-lg me-2"></i>Criar Primeiro Link
     </a>
 </div>
@@ -244,247 +301,495 @@
 
 {% block extra_css %}
 <style>
-    /* Métricas */
+    /* Métricas Melhoradas */
+    .metric-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .metric-icon {
+        font-size: 1.2rem;
+        color: var(--primary);
+    }
+    
     .metric-label {
-        font-size: 0.7rem;
-        color: var(--gray-500);
+        font-size: 0.75rem;
+        color: var(--gray-600);
         text-transform: uppercase;
         font-weight: 600;
         letter-spacing: 0.5px;
-        margin-bottom: 8px;
     }
     
     .metric-value {
-        font-size: 1.8rem;
-        font-weight: 700;
+        font-size: 2rem;
+        font-weight: 800;
         color: var(--gray-900);
         line-height: 1;
     }
     
-    .metric-trend {
-        font-size: 0.75rem;
+    .metric-badge {
+        font-size: 0.7rem;
         font-weight: 600;
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-bottom: 2px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        margin-bottom: 4px;
     }
     
-    .metric-trend.positive {
+    .metric-badge.success {
         background: rgba(34, 197, 94, 0.1);
         color: var(--success);
     }
     
-    .metric-trend.negative {
+    .metric-badge.danger {
         background: rgba(239, 68, 68, 0.1);
         color: var(--danger);
     }
     
     .metric-progress {
-        height: 4px;
+        height: 6px;
         background: var(--gray-100);
-        border-radius: 2px;
-        margin-top: 8px;
+        border-radius: 3px;
+        margin-top: 12px;
         overflow: hidden;
     }
     
     .progress-bar {
         height: 100%;
-        border-radius: 2px;
-        transition: width 0.3s;
+        border-radius: 3px;
+        transition: width 0.5s ease;
     }
     
-    .metric-subtitle {
+    .metric-detail {
         font-size: 0.7rem;
         color: var(--gray-500);
-        margin-top: 6px;
+        margin-top: 8px;
     }
     
-    /* Grid de Status */
-    .status-grid {
+    /* Status Cards Enhanced */
+    .status-grid-enhanced {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
     
-    .status-card {
+    .status-card-enhanced {
         background: white;
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    
-    .status-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-    }
-    
-    .status-success .status-icon {
-        background: rgba(34, 197, 94, 0.1);
-        color: var(--success);
-    }
-    
-    .status-warning .status-icon {
-        background: rgba(249, 115, 22, 0.1);
-        color: var(--warning);
-    }
-    
-    .status-danger .status-icon {
-        background: rgba(239, 68, 68, 0.1);
-        color: var(--danger);
-    }
-    
-    .status-info .status-icon {
-        background: rgba(99, 102, 241, 0.1);
-        color: var(--primary);
-    }
-    
-    .status-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        line-height: 1;
-    }
-    
-    .status-label {
-        font-size: 0.75rem;
-        color: var(--gray-500);
-        margin-top: 2px;
-    }
-    
-    /* Ações Rápidas */
-    .acoes-rapidas {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-    }
-    
-    .acao-btn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-decoration: none;
-        padding: 16px 8px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 2px solid transparent;
         transition: all 0.2s;
     }
     
-    .acao-btn:hover {
+    .status-card-enhanced:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     
-    .acao-icon {
+    .status-card-enhanced.success {
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+    
+    .status-card-enhanced.warning {
+        border-color: rgba(249, 115, 22, 0.2);
+    }
+    
+    .status-card-enhanced.danger {
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+    
+    .status-card-enhanced.info {
+        border-color: rgba(99, 102, 241, 0.2);
+    }
+    
+    .status-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .status-icon-lg {
+        font-size: 1.8rem;
+    }
+    
+    .status-card-enhanced.success .status-icon-lg {
+        color: var(--success);
+    }
+    
+    .status-card-enhanced.warning .status-icon-lg {
+        color: var(--warning);
+    }
+    
+    .status-card-enhanced.danger .status-icon-lg {
+        color: var(--danger);
+    }
+    
+    .status-card-enhanced.info .status-icon-lg {
+        color: var(--primary);
+    }
+    
+    .status-value-lg {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        display: block;
+        line-height: 1;
+    }
+    
+    .status-label-sm {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        font-weight: 500;
+    }
+    
+    .status-amount {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--gray-700);
+    }
+    
+    /* Actions Grid */
+    .actions-grid {
+        display: grid;
+        gap: 12px;
+    }
+    
+    .action-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+    
+    .action-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .action-card.primary {
+        border-color: rgba(99, 102, 241, 0.2);
+    }
+    
+    .action-card.primary:hover {
+        background: rgba(99, 102, 241, 0.02);
+    }
+    
+    .action-card.success {
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+    
+    .action-card.success:hover {
+        background: rgba(34, 197, 94, 0.02);
+    }
+    
+    .action-card.warning {
+        border-color: rgba(249, 115, 22, 0.2);
+    }
+    
+    .action-card.warning:hover {
+        background: rgba(249, 115, 22, 0.02);
+    }
+    
+    .action-icon {
         width: 48px;
         height: 48px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 8px;
+        font-size: 1.5rem;
+        flex-shrink: 0;
     }
     
-    .acao-icon i {
-        font-size: 1.4rem;
+    .action-card.primary .action-icon {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
     }
     
-    .acao-btn span {
+    .action-card.success .action-icon {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success);
+    }
+    
+    .action-card.warning .action-icon {
+        background: rgba(249, 115, 22, 0.1);
+        color: var(--warning);
+    }
+    
+    .action-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .action-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--gray-900);
+    }
+    
+    .action-subtitle {
         font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--gray-700);
-        text-align: center;
+        color: var(--gray-500);
     }
     
-    /* Gráfico de Barras */
-    .grafico-barras {
+    .action-arrow {
+        color: var(--gray-400);
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    /* Gráfico Enhanced */
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+    }
+    
+    .chart-subtitle {
+        font-size: 0.8rem;
+        color: var(--gray-500);
+        margin: 0;
+    }
+    
+    .chart-legend {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        color: var(--gray-600);
+    }
+    
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    
+    .legend-dot.today {
+        background: var(--success);
+    }
+    
+    .legend-dot.normal {
+        background: var(--primary);
+    }
+    
+    .grafico-barras-enhanced {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        height: 120px;
-        gap: 6px;
-        margin-bottom: 16px;
+        height: 140px;
+        gap: 8px;
+        margin: 20px 0;
     }
     
-    .grafico-dia {
+    .grafico-dia-enhanced {
         flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
     }
     
     .barra-container {
         width: 100%;
-        height: 80px;
+        height: 100px;
         display: flex;
         align-items: flex-end;
     }
     
-    .barra {
+    .barra-enhanced {
         width: 100%;
-        background: linear-gradient(180deg, var(--primary), #818cf8);
-        border-radius: 4px 4px 2px 2px;
-        min-height: 4px;
+        background: linear-gradient(180deg, var(--primary), rgba(99, 102, 241, 0.7));
+        border-radius: 6px 6px 0 0;
+        min-height: 5%;
         transition: all 0.3s;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .barra-enhanced:hover {
+        transform: scaleY(1.05);
+        filter: brightness(1.1);
     }
     
     .barra-hoje {
-        background: linear-gradient(180deg, var(--success), #34d399);
+        background: linear-gradient(180deg, var(--success), rgba(34, 197, 94, 0.7));
+        box-shadow: 0 -4px 12px rgba(34, 197, 94, 0.3);
     }
     
-    .dia-label {
-        font-size: 0.65rem;
-        color: var(--gray-500);
+    .barra-tooltip {
+        position: absolute;
+        top: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gray-900);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        opacity: 0;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+    
+    .barra-enhanced:hover .barra-tooltip {
+        opacity: 1;
+    }
+    
+    .dia-label-enhanced {
+        font-size: 0.7rem;
+        color: var(--gray-600);
         font-weight: 600;
     }
     
-    .dia-valor {
-        font-size: 0.7rem;
-        color: var(--gray-400);
-        font-weight: 500;
-    }
-    
-    .grafico-dia.hoje .dia-label,
-    .grafico-dia.hoje .dia-valor {
+    .grafico-dia-enhanced.hoje .dia-label-enhanced {
         color: var(--success);
         font-weight: 700;
     }
     
-    .grafico-footer {
+    .chart-footer {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding-top: 20px;
+        border-top: 2px solid var(--gray-100);
+    }
+    
+    .chart-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        font-weight: 500;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+    
+    .stat-value.success {
+        color: var(--success);
+    }
+    
+    .stat-value.danger {
+        color: var(--danger);
+    }
+    
+    .chart-divider {
+        width: 1px;
+        height: 40px;
+        background: var(--gray-200);
+    }
+    
+    .empty-chart {
+        text-align: center;
+        padding: 40px;
+        color: var(--gray-400);
+    }
+    
+    .empty-chart i {
+        font-size: 3rem;
+        margin-bottom: 12px;
+    }
+    
+    /* Transaction Items */
+    .transaction-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        border-bottom: 1px solid var(--gray-100);
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+    
+    .transaction-item:last-child {
+        border-bottom: none;
+    }
+    
+    .transaction-item:hover {
+        background: var(--gray-50);
+    }
+    
+    .transaction-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .transaction-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .transaction-header {
         display: flex;
         justify-content: space-between;
-        padding-top: 16px;
-        border-top: 1px solid var(--gray-100);
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
     }
     
-    .footer-label {
-        font-size: 0.7rem;
-        color: var(--gray-500);
-    }
-    
-    .footer-value {
-        font-size: 1rem;
-        font-weight: 700;
+    .transaction-name {
+        font-size: 0.9rem;
+        font-weight: 600;
         color: var(--gray-900);
-        margin-top: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
-    /* Badge Status */
-    .badge-status {
-        display: inline-block;
+    .transaction-amount {
+        font-size: 0.95rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    
+    .transaction-footer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .transaction-badge {
         font-size: 0.65rem;
         padding: 3px 8px;
-        border-radius: 4px;
-        margin-right: 6px;
+        border-radius: 10px;
         font-weight: 600;
     }
     
@@ -508,32 +813,59 @@
         color: var(--primary);
     }
     
-    .badge-secondary {
-        background: rgba(107, 114, 128, 0.1);
-        color: var(--gray-600);
+    .transaction-details {
+        font-size: 0.75rem;
+        color: var(--gray-500);
     }
     
-    /* Conversion Cards */
-    .conversion-card {
-        text-align: center;
+    /* Info Cards Mini */
+    .info-card-mini {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
     
-    .conversion-icon {
+    .info-card-icon {
         font-size: 2rem;
         color: var(--primary);
-        margin-bottom: 8px;
     }
     
-    .conversion-value {
+    .info-card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .info-card-value {
         font-size: 1.5rem;
-        font-weight: 700;
+        font-weight: 800;
         color: var(--gray-900);
-        margin-bottom: 4px;
+        line-height: 1;
     }
     
-    .conversion-label {
-        font-size: 0.7rem;
+    .info-card-label {
+        font-size: 0.75rem;
         color: var(--gray-500);
+        font-weight: 500;
+    }
+    
+    /* Link View All */
+    .link-view-all {
+        font-size: 0.85rem;
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: gap 0.2s;
+    }
+    
+    .link-view-all:hover {
+        gap: 6px;
     }
     
     /* Empty State */
@@ -541,37 +873,62 @@
         text-align: center;
         padding: 60px 20px;
         background: white;
-        border-radius: 16px;
+        border-radius: 20px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
     
-    .empty-state i {
-        font-size: 4rem;
-        color: var(--gray-300);
-        margin-bottom: 16px;
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+    
+    .empty-icon i {
+        font-size: 2.5rem;
+        color: var(--primary);
     }
     
     .empty-state h3 {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: 700;
         color: var(--gray-900);
         margin-bottom: 8px;
     }
     
     .empty-state p {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: var(--gray-500);
-        margin-bottom: 24px;
+        margin-bottom: 28px;
     }
     
     /* Responsivo */
-    @media (max-width: 380px) {
-        .acoes-rapidas {
-            grid-template-columns: repeat(2, 1fr);
+    @media (max-width: 768px) {
+        .status-grid-enhanced {
+            grid-template-columns: 1fr;
         }
         
-        .status-grid {
-            grid-template-columns: 1fr;
+        .chart-header {
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .chart-legend {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .transaction-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .chart-footer {
+            flex-wrap: wrap;
         }
     }
 </style>
