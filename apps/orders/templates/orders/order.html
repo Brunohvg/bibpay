@@ -1,511 +1,272 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Criar Link{% endblock %}
-{% block nav_links %}active{% endblock %}
+{% block title %}Novo Link{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header">
-    <a href="#" class="back-btn">
-        <i class="bi bi-arrow-left"></i>
-    </a>
-    <h1 class="page-title">Novo Link</h1>
-</div>
+<div class="create-link-container">
 
-<!-- Formulário Principal -->
- 
-<form action="{% url 'orders:order-create' %}" method="post" id="formLink">
-    {% csrf_token %}
-    
-    <!-- Card Cliente e Vendedor -->
-    <div class="card-app mb-3">
-        <div class="card-body">
-            <div class="section-title mb-3">
-                <i class="bi bi-person"></i>
-                <span>Dados do Cliente</span>
+    <header class="app-header-simple">
+        <a href="javascript:history.back()" class="btn-back">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1>Novo Link</h1>
+        <div class="header-spacer"></div>
+    </header>
+
+    <form action="{% url 'orders:order-create' %}" method="post" id="formLink" class="main-form">
+        {% csrf_token %}
+
+        <div class="money-card">
+            <label class="money-label">Valor da venda</label>
+            <div class="money-input-wrapper">
+                <span class="currency-symbol">R$</span>
+                <input type="text" 
+                       name="valor_produto" 
+                       id="valorProduto" 
+                       class="big-input" 
+                       placeholder="0,00" 
+                       inputmode="numeric" 
+                       required 
+                       autofocus>
             </div>
-            
-            <div class="form-floating mb-3">
-                <input type="text" class="form-control input-float" name="cliente_nome" id="clienteNome" placeholder="Nome do cliente" required>
-                <label for="clienteNome">Nome do cliente</label>
+
+            <div class="freight-section">
+                <div class="freight-toggle" id="btnToggleFrete">
+                    <div class="toggle-left">
+                        <div class="toggle-icon">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <span class="toggle-text">Adicionar Frete</span>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="checkFrete">
+                        <span class="slider"></span>
+                    </div>
+                </div>
+
+                <div class="freight-input-box" id="boxFrete">
+                    <div class="input-group-clean">
+                        <span>R$</span>
+                        <input type="text" name="valor_frete" id="valorFrete" placeholder="0,00" inputmode="numeric">
+                    </div>
+                </div>
             </div>
-            
-            <div class="form-floating">
-                <select class="form-select input-float" name="vendedor" id="vendedor" required>
-                    <option value="" disabled selected></option>
-                    {% for seller in sellers %}
-                        <option value="{{ seller.id }}">{{ seller.name }}</option>
-                    {% endfor %}
-                </select>
-                <label for="vendedor">Vendedor responsável</label>
+
+            <div class="total-display">
+                <span>Total a cobrar</span>
+                <strong id="textoTotal">R$ 0,00</strong>
             </div>
         </div>
-    </div>
-    
-    <!-- Card Valores -->
-    <div class="card-app mb-3">
-        <div class="card-body">
-            <div class="section-title mb-3">
-                <i class="bi bi-cash-stack"></i>
-                <span>Valor do Link</span>
-            </div>
+
+        <div class="form-section">
+            <h3 class="section-title">Dados do Pedido</h3>
             
-            <!-- Valor do Produto -->
-            <div class="valor-box mb-3">
-                <label class="valor-label">Valor do Produto</label>
-                <div class="valor-input-container">
-                    <span class="valor-currency">R$</span>
-                    <input type="text" class="valor-input-field" name="valor_produto" id="valorProduto" placeholder="0,00" required>
+            <div class="input-box">
+                <label for="clienteNome">Nome do Cliente</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-person"></i>
+                    <input type="text" name="cliente_nome" id="clienteNome" placeholder="Ex: Maria Silva" required>
                 </div>
             </div>
-            
-            <!-- Adicionar Frete -->
-            <div id="freteToggle">
-                <button type="button" class="btn-add-frete" id="btnAddFrete">
-                    <div class="btn-add-icon">
-                        <i class="bi bi-truck"></i>
-                    </div>
-                    <span>Adicionar valor do frete</span>
-                    <i class="bi bi-plus-lg ms-auto"></i>
-                </button>
-            </div>
-            
-            <!-- Container do Frete (oculto inicialmente) -->
-            <div id="freteContainer" class="frete-box" style="display: none;">
-                <div class="frete-header">
-                    <label class="valor-label mb-0">Valor do Frete</label>
-                    <button type="button" class="btn-remove-frete" id="btnRemoveFrete">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-                <div class="valor-input-container frete-input">
-                    <span class="valor-currency">R$</span>
-                    <input type="text" class="valor-input-field" name="valor_frete" id="valorFrete" placeholder="0,00">
-                </div>
-            </div>
-            
-            <!-- Resumo Total -->
-            <div class="total-box" id="totalDisplay" style="display: none;">
-                <div class="total-row">
-                    <span class="total-label">Produto</span>
-                    <span class="total-value" id="subtotalProduto">R$ 0,00</span>
-                </div>
-                <div class="total-row" id="linhaFrete" style="display: none;">
-                    <span class="total-label">Frete</span>
-                    <span class="total-value" id="subtotalFrete">R$ 0,00</span>
-                </div>
-                <div class="total-row total-final-row">
-                    <span class="total-label-final">Total do Link</span>
-                    <span class="total-value-final" id="valorTotal">R$ 0,00</span>
+
+            <div class="input-box">
+                <label for="vendedor">Vendedor</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-shop"></i>
+                    <select name="vendedor" id="vendedor" required>
+                        <option value="" disabled selected>Selecione...</option>
+                        {% for seller in sellers %}
+                            <option value="{{ seller.id }}">{{ seller.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <i class="bi bi-chevron-down select-arrow"></i>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Card Parcelamento -->
-    <div class="card-app mb-4">
-        <div class="card-body">
-            <div class="section-title mb-3">
-                <i class="bi bi-credit-card"></i>
-                <span>Parcelamento</span>
+
+        <div class="form-section">
+            <h3 class="section-title">Parcelamento</h3>
+            <div class="installments-grid" id="installmentsGrid">
+                <div class="installment-placeholder">
+                    Digite um valor acima para ver as opções
+                </div>
             </div>
-            
-            <!-- Cards visuais de parcelas com valor visível -->
-            <div class="parcelas-grid">
-                <!-- 1x -->
-                <label class="parcela-card">
-                    <input type="radio" name="parcelas" value="1" class="parcela-radio">
-                    <div class="parcela-card-content">
-                        <div class="parcela-badge">À vista</div>
-                        <div class="parcela-times">1x</div>
-                        <div class="parcela-amount" id="parcela1">R$ 0,00</div>
-                    </div>
-                    <div class="parcela-check-icon">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                </label>
-                
-                <!-- 2x -->
-                <label class="parcela-card">
-                    <input type="radio" name="parcelas" value="2" class="parcela-radio">
-                    <div class="parcela-card-content">
-                        <div class="parcela-badge">Sem juros</div>
-                        <div class="parcela-times">2x</div>
-                        <div class="parcela-amount" id="parcela2">R$ 0,00</div>
-                    </div>
-                    <div class="parcela-check-icon">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                </label>
-                
-                <!-- 3x -->
-                <label class="parcela-card">
-                    <input type="radio" name="parcelas" value="3" class="parcela-radio" checked>
-                    <div class="parcela-card-content">
-                        <div class="parcela-badge">Sem juros</div>
-                        <div class="parcela-times">3x</div>
-                        <div class="parcela-amount" id="parcela3">R$ 0,00</div>
-                    </div>
-                    <div class="parcela-check-icon">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                </label>
-            </div>
+            <input type="hidden" name="parcelas" id="inputParcelas" value="1">
         </div>
-    </div>
-    
-    <!-- Botão Gerar -->
-    <div class="d-grid mb-3">
-        <button type="submit" class="btn-gerar-link">
-            <i class="bi bi-link-45deg me-2"></i>
-            Gerar Link de Pagamento
-        </button>
-    </div>
-</form>
+
+        <div class="form-footer">
+            <button type="submit" class="btn-submit-block">
+                <span>Gerar Link</span>
+                <i class="bi bi-arrow-right"></i>
+            </button>
+        </div>
+
+    </form>
+</div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Section Titles */
-    .section-title {
+    :root {
+        --bg-app: #f8fafc;
+        --primary: #4f46e5;
+        --text-dark: #1e293b;
+        --text-gray: #64748b;
+        --border: #e2e8f0;
+        --card-radius: 20px;
+    }
+
+    body { background-color: var(--bg-app); }
+
+    .create-link-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 1rem;
+        /* Espaço extra no final para não colar na borda do celular */
+        padding-bottom: 4rem; 
+    }
+
+    /* --- HEADER --- */
+    .app-header-simple {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .btn-back {
+        width: 40px; height: 40px; border-radius: 12px; background: white;
+        border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+        color: var(--text-dark); font-size: 1.2rem; transition: 0.2s; text-decoration: none;
+    }
+    .btn-back:active { background: #f1f5f9; }
+    .app-header-simple h1 { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin: 0; }
+    .header-spacer { width: 40px; }
+
+    /* --- MONEY CARD --- */
+    .money-card {
+        background: white; border-radius: var(--card-radius); padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03); text-align: center; margin-bottom: 1.5rem;
+        border: 1px solid var(--border);
+    }
+    .money-label { font-size: 0.85rem; color: var(--text-gray); font-weight: 600; margin-bottom: 0.5rem; display: block; }
+    
+    .money-input-wrapper {
+        display: flex; justify-content: center; align-items: center; gap: 4px; margin-bottom: 1.5rem;
+    }
+    .currency-symbol { font-size: 1.5rem; font-weight: 600; color: var(--text-gray); margin-top: 8px; }
+    .big-input {
+        border: none; background: transparent; font-size: 3rem; font-weight: 800;
+        color: var(--text-dark); width: 100%; text-align: center; outline: none; padding: 0;
+        letter-spacing: -1px;
+    }
+    .big-input::placeholder { color: #cbd5e1; }
+
+    /* --- FRETE --- */
+    .freight-section { background: #f8fafc; border-radius: 14px; padding: 0.5rem; margin-bottom: 1.5rem; border: 1px solid #f1f5f9; }
+    .freight-toggle {
+        display: flex; align-items: center; padding: 0.8rem; cursor: pointer;
+        justify-content: space-between;
+    }
+    .toggle-left { display: flex; align-items: center; gap: 10px; }
+    .toggle-icon { color: var(--primary); font-size: 1.2rem; }
+    .toggle-text { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); }
+    
+    .toggle-switch { position: relative; width: 44px; height: 24px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #cbd5e1; transition: .4s; border-radius: 24px;
+    }
+    .slider:before {
+        position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+        background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .freight-input-box {
+        display: none; padding: 0 0.8rem 0.8rem 0.8rem; text-align: left;
+        border-top: 1px dashed var(--border); margin-top: 0.5rem; padding-top: 0.8rem;
+    }
+    .freight-input-box.open { display: block; animation: slideDown 0.3s ease; }
+    .input-group-clean { display: flex; align-items: center; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; }
+    .input-group-clean span { color: var(--text-gray); font-weight: 600; font-size: 0.9rem; margin-right: 8px; }
+    .input-group-clean input { border: none; width: 100%; font-weight: 700; color: var(--text-dark); font-size: 1.1rem; outline: none; }
+
+    /* --- TOTAL --- */
+    .total-display {
+        display: flex; justify-content: space-between; align-items: center;
+        background: var(--text-dark); color: white; padding: 1rem; border-radius: 12px;
+    }
+    .total-display span { font-size: 0.9rem; opacity: 0.8; }
+    .total-display strong { font-size: 1.2rem; }
+
+    /* --- FORMULÁRIOS --- */
+    .form-section { margin-bottom: 2rem; }
+    .section-title { font-size: 0.8rem; font-weight: 700; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem; padding-left: 4px; }
+    
+    .input-box { margin-bottom: 1rem; }
+    .input-box label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.4rem; padding-left: 4px; }
+    .input-wrapper {
+        position: relative; display: flex; align-items: center;
+    }
+    .input-wrapper i { position: absolute; left: 14px; color: var(--text-gray); font-size: 1.1rem; pointer-events: none; }
+    .input-wrapper input, .input-wrapper select {
+        width: 100%; padding: 14px 14px 14px 44px; border: 1px solid var(--border);
+        border-radius: 12px; background: white; font-size: 0.95rem; color: var(--text-dark);
+        outline: none; transition: border-color 0.2s; appearance: none;
+    }
+    .input-wrapper input:focus, .input-wrapper select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+    .select-arrow { left: auto !important; right: 14px; font-size: 0.9rem !important; }
+
+    /* --- PARCELAS --- */
+    .installments-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    
+    .installment-card {
+        background: white; border: 2px solid var(--border); border-radius: 12px;
+        padding: 12px; cursor: pointer; transition: all 0.2s; position: relative;
+    }
+    .installment-card.active { border-color: var(--primary); background: #eef2ff; }
+    
+    .inst-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-gray); margin-bottom: 4px; }
+    .inst-value { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); }
+    .installment-card.active .inst-value { color: var(--primary); }
+    .inst-badge { font-size: 0.65rem; background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    
+    .installment-placeholder { 
+        grid-column: 1 / -1; text-align: center; color: var(--text-gray); 
+        padding: 20px; font-size: 0.9rem; background: #fff; 
+        border-radius: 12px; border: 1px dashed var(--border); 
+    }
+
+    /* --- FOOTER NORMAL (Não Flutuante) --- */
+    .form-footer {
+        margin-top: 2rem;
+    }
+
+    .btn-submit-block {
+        width: 100%;
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: 14px;
+        font-size: 1.1rem;
+        font-weight: 700;
         display: flex;
+        justify-content: center;
         align-items: center;
         gap: 10px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--gray-600);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .section-title i {
-        font-size: 1rem;
-        color: var(--primary);
-    }
-    
-    /* Floating Inputs */
-    .input-float {
-        border-radius: 14px;
-        border: 1.5px solid var(--gray-200);
-        height: 58px;
-        font-size: 1rem;
-        background: var(--gray-50);
-    }
-    
-    .input-float:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-        background: white;
-    }
-    
-    .form-floating > label {
-        color: var(--gray-500);
-    }
-    
-    /* Valor Box */
-    .valor-box {
-        background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
-        border-radius: 16px;
-        padding: 16px;
-        border: 1.5px solid var(--gray-100);
-    }
-    
-    .valor-label {
-        display: block;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--gray-500);
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        margin-bottom: 8px;
-    }
-    
-    .valor-input-container {
-        display: flex;
-        align-items: center;
-    }
-    
-    .valor-currency {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--gray-400);
-        margin-right: 8px;
-    }
-    
-    .valor-input-field {
-        flex: 1;
-        border: none;
-        background: transparent;
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        padding: 0;
-        width: 100%;
-    }
-    
-    .valor-input-field:focus {
-        outline: none;
-    }
-    
-    .valor-input-field::placeholder {
-        color: var(--gray-300);
-    }
-    
-    /* Botão Adicionar Frete */
-    .btn-add-frete {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: white;
-        border: 2px dashed var(--gray-200);
-        border-radius: 14px;
-        padding: 14px 16px;
-        color: var(--gray-600);
-        font-weight: 500;
-        font-size: 0.95rem;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: 0.2s;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
     }
+
+    .btn-submit-block:active { transform: scale(0.98); }
+
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     
-    .btn-add-frete:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: rgba(99, 102, 241, 0.03);
-    }
-    
-    .btn-add-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        background: var(--gray-100);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        color: var(--gray-500);
-        transition: all 0.2s;
-    }
-    
-    .btn-add-frete:hover .btn-add-icon {
-        background: rgba(99, 102, 241, 0.1);
-        color: var(--primary);
-    }
-    
-    /* Frete Box */
-    .frete-box {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid var(--gray-100);
-    }
-    
-    .frete-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-    
-    .btn-remove-frete {
-        background: var(--gray-100);
-        border: none;
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        color: var(--gray-500);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-    }
-    
-    .btn-remove-frete:hover {
-        background: rgba(239, 68, 68, 0.1);
-        color: var(--danger);
-    }
-    
-    .frete-input .valor-currency {
-        font-size: 1.2rem;
-    }
-    
-    .frete-input .valor-input-field {
-        font-size: 1.75rem;
-    }
-    
-    /* Total Box */
-    .total-box {
-        margin-top: 20px;
-        padding: 16px;
-        background: var(--gray-50);
-        border-radius: 14px;
-    }
-    
-    .total-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-    }
-    
-    .total-label {
-        font-size: 0.9rem;
-        color: var(--gray-500);
-    }
-    
-    .total-value {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: var(--gray-700);
-    }
-    
-    .total-final-row {
-        margin-top: 8px;
-        padding-top: 12px;
-        border-top: 1.5px solid var(--gray-200);
-    }
-    
-    .total-label-final {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--gray-800);
-    }
-    
-    .total-value-final {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--success);
-    }
-    
-    /* Parcelas Grid - Cards visuais */
-    .parcelas-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-    }
-    
-    .parcela-card {
-        position: relative;
-        cursor: pointer;
-    }
-    
-    .parcela-radio {
-        display: none;
-    }
-    
-    .parcela-card-content {
-        background: var(--gray-50);
-        border: 2px solid var(--gray-100);
-        border-radius: 16px;
-        padding: 16px 12px;
-        text-align: center;
-        transition: all 0.2s;
-    }
-    
-    .parcela-badge {
-        font-size: 0.65rem;
-        font-weight: 600;
-        color: var(--gray-500);
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        margin-bottom: 6px;
-    }
-    
-    .parcela-times {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--gray-700);
-        line-height: 1;
-        margin-bottom: 8px;
-    }
-    
-    .parcela-amount {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--gray-600);
-    }
-    
-    .parcela-check-icon {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        font-size: 1.1rem;
-        color: transparent;
-        transition: all 0.2s;
-    }
-    
-    /* Card selecionado */
-    .parcela-radio:checked + .parcela-card-content {
-        background: rgba(99, 102, 241, 0.08);
-        border-color: var(--primary);
-    }
-    
-    .parcela-radio:checked + .parcela-card-content .parcela-badge {
-        color: var(--primary);
-    }
-    
-    .parcela-radio:checked + .parcela-card-content .parcela-times {
-        color: var(--primary);
-    }
-    
-    .parcela-radio:checked + .parcela-card-content .parcela-amount {
-        color: var(--primary);
-    }
-    
-    .parcela-radio:checked ~ .parcela-check-icon {
-        color: var(--primary);
-    }
-    
-    .parcela-card:hover .parcela-card-content {
-        border-color: var(--gray-300);
-        background: var(--gray-100);
-    }
-    
-    .parcela-card:has(.parcela-radio:checked):hover .parcela-card-content {
-        background: rgba(99, 102, 241, 0.12);
-    }
-    
-    /* Botão Gerar Link */
-    .btn-gerar-link {
-        width: 100%;
-        background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
-        border: none;
-        border-radius: 16px;
-        padding: 18px 24px;
-        color: white;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-    }
-    
-    .btn-gerar-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-    }
-    
-    .btn-gerar-link:active {
-        transform: translateY(0);
-    }
-    
-    /* Mobile adjustments */
-    @media (max-width: 360px) {
-        .parcelas-grid {
-            gap: 8px;
-        }
-        
-        .parcela-card-content {
-            padding: 14px 8px;
-        }
-        
-        .parcela-times {
-            font-size: 1.5rem;
-        }
-        
-        .parcela-amount {
-            font-size: 0.8rem;
-        }
+    @media(min-width: 768px) {
+        .installments-grid { grid-template-columns: repeat(3, 1fr); }
     }
 </style>
 {% endblock %}
@@ -513,105 +274,104 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const valorProduto = document.getElementById('valorProduto');
-    const valorFrete = document.getElementById('valorFrete');
-    const btnAddFrete = document.getElementById('btnAddFrete');
-    const btnRemoveFrete = document.getElementById('btnRemoveFrete');
-    const freteContainer = document.getElementById('freteContainer');
-    const freteToggle = document.getElementById('freteToggle');
-    const totalDisplay = document.getElementById('totalDisplay');
-    const linhaFrete = document.getElementById('linhaFrete');
-    const formLink = document.getElementById('formLink');
-    
-    // Formatação de moeda
-    function formatarMoeda(valor) {
-        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-    
-    function parseValor(str) {
-        if (!str) return 0;
+    const elValorProduto = document.getElementById('valorProduto');
+    const elValorFrete = document.getElementById('valorFrete');
+    const elCheckFrete = document.getElementById('checkFrete');
+    const elBoxFrete = document.getElementById('boxFrete');
+    const elTextoTotal = document.getElementById('textoTotal');
+    const elGridParcelas = document.getElementById('installmentsGrid');
+    const elInputParcelas = document.getElementById('inputParcelas');
+    const elBtnToggle = document.getElementById('btnToggleFrete');
+
+    const mascaraMoeda = (valor) => {
+        valor = valor.replace(/\D/g, "");
+        valor = (valor / 100).toFixed(2) + "";
+        valor = valor.replace(".", ",");
+        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        return valor;
+    };
+
+    const getMoneyValue = (str) => {
+        if(!str) return 0;
         return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
-    }
-    
-    // Máscara de moeda nos inputs
-    function mascaraMoeda(input) {
-        input.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            value = (parseInt(value) / 100).toFixed(2);
-            value = value.replace('.', ',');
-            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            if (value === 'NaN') value = '';
-            e.target.value = value;
-            calcularTotal();
+    };
+
+    const formatMoney = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    [elValorProduto, elValorFrete].forEach(input => {
+        input.addEventListener('input', (e) => {
+            e.target.value = mascaraMoeda(e.target.value);
+            calcularTudo();
         });
+    });
+
+    elBtnToggle.addEventListener('click', (e) => {
+        if(e.target.type !== 'checkbox') {
+            elCheckFrete.checked = !elCheckFrete.checked;
+        }
+        
+        if(elCheckFrete.checked) {
+            elBoxFrete.classList.add('open');
+            setTimeout(() => elValorFrete.focus(), 100);
+        } else {
+            elBoxFrete.classList.remove('open');
+            elValorFrete.value = '';
+            calcularTudo();
+        }
+    });
+
+    function calcularTudo() {
+        const vProd = getMoneyValue(elValorProduto.value);
+        const vFrete = elCheckFrete.checked ? getMoneyValue(elValorFrete.value) : 0;
+        const total = vProd + vFrete;
+
+        elTextoTotal.innerText = formatMoney(total);
+        renderParcelas(total);
     }
-    
-    mascaraMoeda(valorProduto);
-    mascaraMoeda(valorFrete);
-    
-    // Toggle do campo de frete
-    btnAddFrete.addEventListener('click', function() {
-        freteContainer.style.display = 'block';
-        freteToggle.style.display = 'none';
-        linhaFrete.style.display = 'flex';
-        valorFrete.focus();
-    });
-    
-    btnRemoveFrete.addEventListener('click', function() {
-        freteContainer.style.display = 'none';
-        freteToggle.style.display = 'block';
-        linhaFrete.style.display = 'none';
-        valorFrete.value = '';
-        calcularTotal();
-    });
-    
-    // Calcular total e atualizar parcelas
-    function calcularTotal() {
-        const produto = parseValor(valorProduto.value);
-        const frete = parseValor(valorFrete.value);
-        const total = produto + frete;
+
+    function renderParcelas(total) {
+        if (total <= 0) {
+            elGridParcelas.innerHTML = '<div class="installment-placeholder">Digite um valor acima para ver as opções</div>';
+            return;
+        }
+
+        let html = '';
+        const maxParcelas = 12;
+
+        for (let i = 1; i <= maxParcelas; i++) {
+            let valorParcela = total / i;
+            let badge = '';
+            
+            if (i === 1) badge = '<span class="inst-badge">À vista</span>';
+            else if (i <= 3) badge = '<span class="inst-badge" style="background:#e0e7ff;color:#4f46e5">Sem juros</span>';
+
+            const isActive = parseInt(elInputParcelas.value) === i ? 'active' : '';
+
+            html += `
+                <div class="installment-card ${isActive}" onclick="selectParcela(this, ${i})">
+                    <div class="inst-header">
+                        <span>${i}x</span>
+                        ${badge}
+                    </div>
+                    <div class="inst-value">${formatMoney(valorParcela)}</div>
+                </div>
+            `;
+        }
+        elGridParcelas.innerHTML = html;
         
-        // Mostrar/ocultar resumo
-        totalDisplay.style.display = total > 0 ? 'block' : 'none';
-        
-        // Atualizar subtotais
-        document.getElementById('subtotalProduto').textContent = formatarMoeda(produto);
-        document.getElementById('subtotalFrete').textContent = formatarMoeda(frete);
-        document.getElementById('valorTotal').textContent = formatarMoeda(total);
-        
-        // Atualizar valor nas parcelas
-        document.getElementById('parcela1').textContent = formatarMoeda(total);
-        document.getElementById('parcela2').textContent = formatarMoeda(total / 2);
-        document.getElementById('parcela3').textContent = formatarMoeda(total / 3);
+        const currentSelection = document.querySelector('.installment-card.active');
+        if (!currentSelection) {
+             elInputParcelas.value = 1;
+             const firstCard = elGridParcelas.querySelector('.installment-card');
+             if(firstCard) firstCard.classList.add('active');
+        }
     }
-    
-    // Submit
-    formLink.addEventListener('submit', function(e) {
-        
-        
-        const cliente = document.getElementById('clienteNome').value;
-        const vendedorSelect = document.getElementById('vendedor');
-        const vendedor = vendedorSelect.options[vendedorSelect.selectedIndex].text;
-        const produto = parseValor(valorProduto.value);
-        const frete = parseValor(valorFrete.value);
-        const total = produto + frete;
-        const parcelas = document.querySelector('input[name="parcelas"]:checked').value;
-        
-        // Salvar no sessionStorage para a página de sucesso
-        sessionStorage.setItem('linkCriado', JSON.stringify({
-            cliente,
-            vendedor,
-            valorProduto: produto,
-            valorFrete: frete,
-            total,
-            parcelas,
-            valorParcela: total / parseInt(parcelas),
-            link: 'https://pay.lojasssss.com/l/' + Math.random().toString(36).substr(2, 8)
-        }));
-        
-        // Redirecionar (em produção seria window.location.href = '/links/sucesso/')
-        window.location.href = '#';
-    });
+
+    window.selectParcela = function(card, num) {
+        document.querySelectorAll('.installment-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        elInputParcelas.value = num;
+    };
 });
 </script>
 {% endblock %}

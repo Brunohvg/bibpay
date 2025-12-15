@@ -55,17 +55,48 @@ def get_order(order_id):
 def filter_orders(**filters):
     return Order.objects.filter(**filters)
 
+def calcular_frete(**data) -> dict:
+    """
+    Calcula frete nos Correios e devolve dados prontos para o template.
+    """
 
-def calcular_frete(data: dict):
     api = CorreiosAPI()
-    return api.calcular(
-        produtos=["03220", "03298"],
+    resultado = api.calcular(
         cep_origem="30170903",
-        cep_destino=data.get("cep_destino", ""),
-        peso=data.get("peso", 0),
-        comprimento=data.get("comprimento", 0),
-        largura=data.get("largura", 0),
-        altura=data.get("altura", 0),
-        formato=data.get("formato", 1),
+        **data
     )
-    
+
+    #print("Resultado do cálculo de frete:", resultado)
+
+    freight = {}
+
+    def ok(servico):
+        return (
+            servico
+            and 'txErro' not in servico.get('preco', {})
+            and 'txErro' not in servico.get('prazo', {})
+        )
+
+    def to_float(valor: str) -> float:
+        # Correios usam vírgula como separador decimal
+        return float(valor.replace(',', '.'))
+
+    # SEDEX - 03220
+    sedex = resultado.get('03220')
+    #print("Dados do SEDEX:", sedex)
+    if ok(sedex):
+        freight['sedex'] = {
+            'preco': to_float(sedex['preco']['pcFinal']),
+            'prazo': int(sedex['prazo']['prazoEntrega'])
+        }
+
+    # PAC - 03298
+    pac = resultado.get('03298')
+    if ok(pac):
+        freight['pac'] = {
+            'preco': to_float(pac['preco']['pcFinal']),
+            'prazo': int(pac['prazo']['prazoEntrega'])
+        }
+
+    return freight
+

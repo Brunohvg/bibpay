@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+
+{% block title %}Calculadora de Frete{% endblock %}
+
+{% block content %}
+<div class="freight-app-container">
+
+    {% if freight %}
+    <div class="results-view animate-fade-in">
+        
+        <div class="results-header">
+            <div>
+                <h1 class="page-title small">Opções de Envio</h1>
+                <p class="subtitle">Para o CEP <strong>{{ request.POST.cep }}</strong></p>
+            </div>
+            <a href="{{ request.path }}" class="btn-icon-soft">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+
+        <div class="freight-list">
+            {% if freight.sedex %}
+            <div class="freight-card featured">
+                <div class="card-badge badge-fast">
+                    <i class="bi bi-lightning-fill"></i> Mais Rápido
+                </div>
+                <div class="card-content">
+                    <div class="carrier-logo sedex-logo">
+                        <i class="bi bi-truck-flatbed"></i>
+                        <span>SEDEX</span>
+                    </div>
+                    <div class="freight-data">
+                        <div class="price">
+                            <small>R$</small>{{ freight.sedex.preco|floatformat:2 }}
+                        </div>
+                        <div class="deadline">
+                            Chega em até <strong>{{ freight.sedex.prazo }} dias úteis</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if freight.pac %}
+            <div class="freight-card">
+                <div class="card-badge badge-economy">
+                    <i class="bi bi-piggy-bank-fill"></i> Econômico
+                </div>
+                <div class="card-content">
+                    <div class="carrier-logo pac-logo">
+                        <i class="bi bi-box-seam"></i>
+                        <span>PAC</span>
+                    </div>
+                    <div class="freight-data">
+                        <div class="price text-dark">
+                            <small>R$</small>{{ freight.pac.preco|floatformat:2 }}
+                        </div>
+                        <div class="deadline">
+                            Chega em até <strong>{{ freight.pac.prazo }} dias úteis</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <a href="{{ request.path }}" class="btn-secondary-block mt-4">
+            Fazer Nova Simulação
+        </a>
+    </div>
+
+    {% else %}
+    <div class="form-view animate-slide-up">
+        
+        <div class="form-header-clean">
+            <h1 class="page-title">Simular Frete</h1>
+            <p class="subtitle">Preencha os dados do pacote abaixo.</p>
+        </div>
+
+        <form method="POST" id="freightForm" class="modern-form">
+            {% csrf_token %}
+
+            <div class="form-section">
+                <label for="cep" class="modern-label">Destino</label>
+                <div class="modern-input-group">
+                    <i class="bi bi-geo-alt input-icon-left primary-icon"></i>
+                    <input 
+                        type="text" 
+                        name="cep" 
+                        id="cep" 
+                        class="modern-input pl-icon" 
+                        placeholder="Digite o CEP" 
+                        maxlength="9" 
+                        inputmode="numeric"
+                        required>
+                    <div id="cep-loader" class="input-loader d-none">Letras</div>
+                </div>
+                <div id="cep-feedback" class="feedback-message"></div>
+            </div>
+
+            <div class="form-section mt-4">
+                <div class="flex-row-center-between mb-2">
+                    <label class="modern-label mb-0">Pacote</label>
+                    <span class="helper-text">Peso e tamanho aproximados</span>
+                </div>
+                
+                <div class="modern-input-group mb-3">
+                    <i class="bi bi-box-seam input-icon-left"></i>
+                    <input 
+                        type="number" 
+                        name="weight" 
+                        class="modern-input pl-icon pr-unit" 
+                        placeholder="Peso total" 
+                        step="0.1" min="0.1" value="1.0" inputmode="decimal" required>
+                    <span class="input-unit-right">KG</span>
+                </div>
+
+                <div class="dimensions-compact-grid">
+                    <div class="dim-field">
+                        <label>Altura</label>
+                        <div class="dim-input-wrapper">
+                            <input type="number" name="height" value="10" min="1" inputmode="numeric" required>
+                            <span>cm</span>
+                        </div>
+                    </div>
+                    <div class="dim-divider"></div>
+                    <div class="dim-field">
+                        <label>Largura</label>
+                        <div class="dim-input-wrapper">
+                            <input type="number" name="width" value="15" min="1" inputmode="numeric" required>
+                            <span>cm</span>
+                        </div>
+                    </div>
+                    <div class="dim-divider"></div>
+                    <div class="dim-field">
+                        <label>Comprimento</label>
+                        <div class="dim-input-wrapper">
+                            <input type="number" name="length" value="20" min="1" inputmode="numeric" required>
+                            <span>cm</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section mt-4">
+                <label class="modern-label">Valor Declarado <span class="badge-optional">Opcional</span></label>
+                <div class="modern-input-group">
+                    <span class="input-currency-left">R$</span>
+                    <input 
+                        type="number" 
+                        name="declared_value" 
+                        class="modern-input pl-currency" 
+                        placeholder="0,00" 
+                        step="0.01" inputmode="decimal">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary-block mt-5" id="btnCalculate">
+                Calcular Opções
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cepInput = document.getElementById('cep');
+    const feedback = document.getElementById('cep-feedback');
+    const loader = document.getElementById('cep-loader');
+    const submitBtn = document.getElementById('btnCalculate');
+    
+    if (!cepInput) return; 
+
+    cepInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 5) value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+        e.target.value = value;
+        
+        feedback.textContent = '';
+        feedback.className = 'feedback-message';
+        cepInput.classList.remove('error', 'success');
+        loader.classList.add('d-none');
+    });
+
+    cepInput.addEventListener('blur', async function() {
+        const cep = this.value.replace(/\D/g, '');
+
+        if (cep.length === 8) {
+            feedback.textContent = '';
+            loader.classList.remove('d-none');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+
+                if (data.erro) throw new Error();
+
+                feedback.textContent = `✓ ${data.localidade}, ${data.uf}`;
+                feedback.className = 'feedback-message success';
+                cepInput.classList.add('success');
+                submitBtn.disabled = false;
+            } catch (error) {
+                feedback.textContent = 'CEP não encontrado.';
+                feedback.className = 'feedback-message error';
+                cepInput.classList.add('error');
+                submitBtn.disabled = true;
+            } finally {
+                loader.classList.add('d-none');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --secondary: #10b981;
+        --bg-app: #f8fafc; /* Fundo mais claro e moderno */
+        --bg-card: #ffffff;
+        --text-dark: #1e293b;
+        --text-gray: #64748b;
+        --text-light: #94a3b8;
+        --border-color: #e2e8f0;
+        --input-bg: #f1f5f9;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --shadow-soft: 0 10px 30px -10px rgba(0,0,0,0.08);
+    }
+
+    body { background-color: var(--bg-app); }
+
+    .freight-app-container {
+        max-width: 500px; /* Largura de app */
+        margin: 2rem auto;
+        padding: 0 1.25rem;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* --- TYPOGRAPHY & UTILS --- */
+    .page-title { font-size: 1.75rem; font-weight: 800; color: var(--text-dark); margin: 0; letter-spacing: -0.5px; }
+    .page-title.small { font-size: 1.4rem; }
+    .subtitle { font-size: 0.95rem; color: var(--text-gray); margin-top: 0.25rem; }
+    .helper-text { font-size: 0.8rem; color: var(--text-light); }
+    .flex-row-center-between { display: flex; justify-content: space-between; align-items: center; }
+    .d-none { display: none; }
+    .mt-4 { margin-top: 1.5rem; } .mt-5 { margin-top: 2.5rem; } .mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 1rem; }
+
+    /* --- BUTTONS --- */
+    .btn-primary-block {
+        width: 100%; padding: 16px; background: var(--primary); color: white;
+        border: none; border-radius: var(--radius-md); font-size: 1.05rem; font-weight: 700;
+        cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+    .btn-primary-block:active { transform: scale(0.98); }
+    .btn-primary-block:disabled { background: var(--text-light); box-shadow: none; }
+
+    .btn-secondary-block {
+        display: block; width: 100%; text-align: center; padding: 14px;
+        background: var(--input-bg); color: var(--text-gray); text-decoration: none;
+        border-radius: var(--radius-md); font-weight: 600; transition: 0.2s;
+    }
+    .btn-secondary-block:active { background: var(--border-color); }
+
+    .btn-icon-soft {
+        width: 44px; height: 44px; background: var(--input-bg); color: var(--text-dark);
+        border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        text-decoration: none; font-size: 1.2rem; transition: 0.2s;
+    }
+    .btn-icon-soft:active { transform: scale(0.95); background: var(--border-color); }
+
+    /* --- FORM STYLES (Modern & Dense) --- */
+    .form-view { background: var(--bg-card); padding: 2rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+    .form-header-clean { margin-bottom: 2rem; text-align: center; }
+    
+    .modern-label { display: block; font-size: 0.9rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.5rem; }
+    .badge-optional { background: var(--input-bg); color: var(--text-gray); font-size: 0.7rem; padding: 2px 6px; border-radius: 6px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+
+    .modern-input-group { position: relative; }
+    
+    .modern-input {
+        width: 100%; height: 56px; /* Altura moderna */
+        padding: 0 16px; background: var(--input-bg);
+        border: 2px solid transparent; border-radius: var(--radius-md);
+        font-size: 1rem; color: var(--text-dark); font-weight: 500;
+        transition: all 0.2s; outline: none;
+    }
+    .modern-input:focus { border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+    .modern-input.success { border-color: var(--secondary); background: #ecfdf5; }
+    .modern-input.error { border-color: #ef4444; background: #fef2f2; }
+    
+    /* Padding modifiers for icons */
+    .modern-input.pl-icon { padding-left: 48px; }
+    .modern-input.pr-unit { padding-right: 48px; }
+    .modern-input.pl-currency { padding-left: 44px; }
+
+    /* Icons & Units positioning */
+    .input-icon-left { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: var(--text-gray); z-index: 2; }
+    .primary-icon { color: var(--primary); }
+    .input-unit-right { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-weight: 700; font-size: 0.9rem; color: var(--text-gray); }
+    .input-currency-left { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-weight: 700; font-size: 1rem; color: var(--text-gray); }
+
+    /* Feedback & Loader */
+    .feedback-message { font-size: 0.85rem; margin-top: 0.4rem; font-weight: 600; min-height: 1.2rem; }
+    .feedback-message.success { color: var(--secondary); }
+    .feedback-message.error { color: #ef4444; }
+    .input-loader { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-gray); }
+
+    /* Dimensions Compact Grid */
+    .dimensions-compact-grid {
+        display: flex; align-items: center; background: var(--input-bg);
+        border-radius: var(--radius-md); padding: 8px; border: 2px solid transparent;
+        transition: 0.2s;
+    }
+    .dimensions-compact-grid:focus-within { border-color: var(--primary); background: var(--bg-card); }
+
+    .dim-field { flex: 1; text-align: center; padding: 4px; }
+    .dim-field label { display: block; font-size: 0.7rem; color: var(--text-light); font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+    .dim-input-wrapper { display: flex; justify-content: center; align-items: baseline; }
+    .dim-field input {
+        width: 50px; border: none; background: transparent; text-align: right;
+        font-weight: 700; font-size: 1.1rem; color: var(--text-dark); padding: 0 2px; outline: none;
+    }
+    .dim-field span { font-size: 0.8rem; color: var(--text-gray); font-weight: 600; }
+    .dim-divider { width: 1px; height: 30px; background: var(--border-color); margin: 0 4px; }
+
+    /* --- RESULTS STYLES (App Cards) --- */
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .freight-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    .freight-card {
+        background: var(--bg-card); border-radius: var(--radius-lg);
+        padding: 1.25rem; position: relative; box-shadow: var(--shadow-soft);
+        transition: all 0.2s; border: 1px solid transparent; cursor: default;
+    }
+    .freight-card:hover { transform: translateY(-2px); box-shadow: 0 15px 35px -10px rgba(0,0,0,0.1); }
+    
+    .freight-card.featured { border: 2px solid var(--primary); background: linear-gradient(to bottom right, #ffffff, #f5f3ff); }
+
+    .card-badge {
+        position: absolute; top: 12px; right: 12px; font-size: 0.75rem; font-weight: 700;
+        padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px;
+    }
+    .badge-fast { background: #dcfce7; color: #166534; }
+    .badge-economy { background: #f1f5f9; color: var(--text-gray); }
+
+    .card-content { display: flex; align-items: center; }
+    
+    .carrier-logo {
+        width: 60px; height: 60px; border-radius: 16px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; margin-right: 1.25rem; flex-shrink: 0;
+    }
+    .sedex-logo { background: var(--primary); color: white; }
+    .pac-logo { background: var(--input-bg); color: var(--text-dark); }
+    .carrier-logo i { font-size: 1.4rem; margin-bottom: 2px; }
+    .carrier-logo span { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px; }
+
+    .freight-data { flex: 1; }
+    .price { font-size: 1.75rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+    .price.text-dark { color: var(--text-dark); }
+    .price small { font-size: 1rem; font-weight: 600; margin-right: 2px; }
+    .deadline { font-size: 0.9rem; color: var(--text-gray); margin-top: 4px; }
+    .deadline strong { color: var(--text-dark); }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+    .animate-slide-up { animation: slideUp 0.4s ease-out; }
+</style>
+{% endblock %}

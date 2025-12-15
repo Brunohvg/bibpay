@@ -173,17 +173,30 @@ class OrderFreteView(View):
         return render(request, 'orders/order_frete.html')
 
     def post(self, request):
-        # 'cep': ['34600190'], 'height': ['10'], 'width': ['15'], 'length': ['20']
-        api = calcular_frete(
-            data={
-                'cep_destino': request.POST.get('cep'),
-                'altura': request.POST.get('height'),
-                'largura': request.POST.get('width'),
-                'comprimento': request.POST.get('length'),
+        try:
+
+            data = {
+                'cep_destino': request.POST.get('cep').replace('-', ''),
+                'peso': float(request.POST.get('weight')) * 1000,  # kg
+                'comprimento': int(request.POST.get('length')),
+                'largura': int(request.POST.get('width')),
+                'altura': int(request.POST.get('height')),
             }
-        )
-        context = {
-            'api': api,
-        }
-        
-        return render(request, 'orders/order_frete.html', context)
+
+            print("Dados enviados:", data.get('peso'))
+
+            freight = calcular_frete(**data)
+            print("Dados de frete calculados:", freight)
+            return render(
+                request,
+                'orders/order_frete.html',
+                {'freight': freight}
+            )
+
+        except (TypeError, ValueError):
+            return render(
+                request,
+                'orders/order_frete.html',
+                {'error': 'Preencha todos os campos com valores válidos.'}
+            )
+

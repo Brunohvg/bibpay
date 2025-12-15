@@ -1,927 +1,559 @@
 {% extends 'base.html' %}
 
-{% block title %}Calcular Frete{% endblock %}
+{% block title %}Calculadora de Frete{% endblock %}
 
 {% block content %}
 <div class="freight-container">
-    
-    <!-- Header -->
+
     <div class="freight-header">
         <div class="header-content">
-            <h1 class="header-title">Calculadora de Frete</h1>
-            <p class="header-subtitle">Compare preços e prazos de entrega</p>
+            <h1><i class="bi bi-truck"></i> Calculadora de Frete</h1>
+            <p>Simulação rápida de preços e prazos</p>
         </div>
         <div class="header-icon">
-            <i class="bi bi-truck"></i>
+            <i class="bi bi-box-seam"></i>
         </div>
     </div>
 
-    <div class="freight-grid">
+    <div class="main-content">
         
-        <!-- FORMULÁRIO -->
-        <div class="form-section">
-            <div class="card-freight">
-                <div class="card-header-freight">
-                    <i class="bi bi-box-seam"></i>
-                    <span>Dados do Envio</span>
+        {% if freight %}
+        <div class="results-wrapper animate-fade-in">
+            <div class="results-header-card">
+                <div class="result-info">
+                    <h2>Opções Encontradas</h2>
+                    <p>Para o CEP: <strong>{{ request.POST.cep }}</strong></p>
                 </div>
-                
-                <form method="POST" id="freightForm" class="freight-form">
-                    {% csrf_token %}
-                    
-                    <!-- CEP Destino -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="bi bi-geo-alt-fill"></i>
-                            CEP de Destino
-                        </label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="text" 
-                                name="cep" 
-                                id="cep" 
-                                class="form-input"
-                                placeholder="00000-000" 
-                                maxlength="9" 
-                                required>
-                            <button type="button" class="input-action" id="btnSearchCep">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                        <small class="form-hint" id="cepInfo"></small>
-                    </div>
+                <a href="{{ request.path }}" class="btn-new-quote">
+                    <i class="bi bi-arrow-counterclockwise"></i> Nova Cotação
+                </a>
+            </div>
 
-                    <!-- Peso -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="bi bi-box"></i>
-                            Peso (kg)
-                        </label>
+            <div class="freight-cards">
+                {% if freight.sedex %}
+                <div class="freight-card sedex">
+                    <div class="card-badge"><i class="bi bi-lightning-fill"></i> Mais Rápido</div>
+                    <div class="card-body">
+                        <div class="carrier-icon">
+                            <span>SEDEX</span>
+                        </div>
+                        <div class="freight-details">
+                            <div class="detail-row">
+                                <span class="label"><i class="bi bi-calendar-event"></i> Prazo:</span>
+                                <span class="value">{{ freight.sedex.prazo }} dias úteis</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label"><i class="bi bi-box"></i> Tipo:</span>
+                                <span class="value">Expresso</span>
+                            </div>
+                        </div>
+                        <div class="freight-price">
+                            <small>Total</small>
+                            R$ {{ freight.sedex.preco|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if freight.pac %}
+                <div class="freight-card pac">
+                    <div class="card-badge economy"><i class="bi bi-piggy-bank"></i> Econômico</div>
+                    <div class="card-body">
+                        <div class="carrier-icon pac-icon">
+                            <span>PAC</span>
+                        </div>
+                        <div class="freight-details">
+                            <div class="detail-row">
+                                <span class="label"><i class="bi bi-calendar-event"></i> Prazo:</span>
+                                <span class="value">{{ freight.pac.prazo }} dias úteis</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label"><i class="bi bi-box"></i> Tipo:</span>
+                                <span class="value">Standard</span>
+                            </div>
+                        </div>
+                        <div class="freight-price">
+                            <small>Total</small>
+                            R$ {{ freight.pac.preco|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% else %}
+        <div class="form-wrapper animate-slide-up">
+            <form method="POST" id="freightForm" class="freight-form">
+                {% csrf_token %}
+                
+                <div class="form-header">
+                    <h3>Dados do Pacote</h3>
+                </div>
+
+                <div class="form-group">
+                    <label for="cep" class="form-label">CEP de Destino</label>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            name="cep" 
+                            id="cep" 
+                            class="form-input" 
+                            placeholder="00000-000" 
+                            maxlength="9" 
+                            autocomplete="off"
+                            required>
+                        <span class="input-icon"><i class="bi bi-geo-alt"></i></span>
+                    </div>
+                    <div id="cep-feedback" class="feedback-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Peso (kg)</label>
+                    <div class="input-group">
                         <input 
                             type="number" 
                             name="weight" 
-                            class="form-input"
-                            placeholder="1.0"
-                            step="0.1"
-                            value="1.0"
+                            class="form-input" 
+                            placeholder="1.0" 
+                            step="0.1" 
+                            min="0.1" 
+                            value="1.0" 
                             required>
+                        <span class="input-icon">KG</span>
                     </div>
+                </div>
 
-                    <!-- Dimensões -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="bi bi-rulers"></i>
-                            Dimensões (cm)
-                        </label>
-                        <div class="dimensions-grid">
-                            <div class="dimension-input">
-                                <label>Altura</label>
-                                <input type="number" name="height" value="10" min="1" required>
-                            </div>
-                            <div class="dimension-input">
-                                <label>Largura</label>
-                                <input type="number" name="width" value="15" min="1" required>
-                            </div>
-                            <div class="dimension-input">
-                                <label>Comprimento</label>
-                                <input type="number" name="length" value="20" min="1" required>
-                            </div>
-                        </div>
+                <div class="dimensions-group">
+                    <label class="form-label full-width">Dimensões (cm)</label>
+                    
+                    <div class="dim-input">
+                        <span>Alt</span>
+                        <input type="number" name="height" value="10" min="1" required>
                     </div>
+                    <div class="dim-input">
+                        <span>Larg</span>
+                        <input type="number" name="width" value="15" min="1" required>
+                    </div>
+                    <div class="dim-input">
+                        <span>Comp</span>
+                        <input type="number" name="length" value="20" min="1" required>
+                    </div>
+                </div>
 
-                    <!-- Valor Declarado -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="bi bi-currency-dollar"></i>
-                            Valor Declarado (opcional)
-                        </label>
+                <div class="form-group">
+                    <label class="form-label">Valor Declarado (Opcional)</label>
+                    <div class="input-group">
                         <input 
                             type="number" 
                             name="declared_value" 
-                            class="form-input"
-                            placeholder="0.00"
+                            class="form-input" 
+                            placeholder="0,00" 
                             step="0.01">
+                        <span class="input-icon">R$</span>
                     </div>
-
-                    <!-- Botão -->
-                    <button type="submit" class="btn-submit" id="btnCalculate">
-                        <span class="btn-text">Calcular Frete</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Dica -->
-            <div class="tip-box">
-                <i class="bi bi-lightbulb"></i>
-                <div>
-                    <strong>Dica:</strong>
-                    <p>Embale bem seu produto para evitar danos durante o transporte.</p>
                 </div>
-            </div>
+
+                <button type="submit" class="btn-submit" id="btnCalculate">
+                    Calcular Frete <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
         </div>
+        {% endif %}
 
-        <!-- RESULTADOS -->
-        <div class="results-section">
-            {% if freight %}
-            <div class="card-freight results-card">
-                <div class="results-header">
-                    <h3>Opções Disponíveis</h3>
-                    <span class="results-count">3 modalidades</span>
-                </div>
-
-                <div class="freight-options">
-                    <!-- SEDEX -->
-                    <div class="freight-option recommended">
-                        <div class="option-badge">Mais Rápido</div>
-                        <div class="option-header">
-                            <div class="option-icon sedex">
-                                <i class="bi bi-lightning-charge-fill"></i>
-                            </div>
-                            <div class="option-info">
-                                <h4>SEDEX</h4>
-                                <p>Entrega expressa</p>
-                            </div>
-                        </div>
-                        <div class="option-details">
-                            <div class="detail-item">
-                                <i class="bi bi-clock"></i>
-                                <span>2 dias úteis</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="bi bi-shield-check"></i>
-                                <span>Rastreamento incluído</span>
-                            </div>
-                        </div>
-                        <div class="option-footer">
-                            <div class="option-price">
-                                <span class="price-label">Valor</span>
-                                <span class="price-value">R$ {{ freight.sedex|floatformat:2 }}</span>
-                            </div>
-                            <button class="btn-select">Selecionar</button>
-                        </div>
-                    </div>
-
-                    <!-- PAC -->
-                    <div class="freight-option">
-                        <div class="option-badge economy">Econômico</div>
-                        <div class="option-header">
-                            <div class="option-icon pac">
-                                <i class="bi bi-box-seam"></i>
-                            </div>
-                            <div class="option-info">
-                                <h4>PAC</h4>
-                                <p>Entrega econômica</p>
-                            </div>
-                        </div>
-                        <div class="option-details">
-                            <div class="detail-item">
-                                <i class="bi bi-clock"></i>
-                                <span>8 dias úteis</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="bi bi-shield-check"></i>
-                                <span>Rastreamento incluído</span>
-                            </div>
-                        </div>
-                        <div class="option-footer">
-                            <div class="option-price">
-                                <span class="price-label">Valor</span>
-                                <span class="price-value">R$ {{ freight.pac|floatformat:2 }}</span>
-                            </div>
-                            <button class="btn-select secondary">Selecionar</button>
-                        </div>
-                    </div>
-
-                    <!-- MOTOBOY -->
-                    <div class="freight-option">
-                        <div class="option-badge local">Local</div>
-                        <div class="option-header">
-                            <div class="option-icon moto">
-                                <i class="bi bi-bicycle"></i>
-                            </div>
-                            <div class="option-info">
-                                <h4>Motoboy</h4>
-                                <p>Entrega rápida local</p>
-                            </div>
-                        </div>
-                        <div class="option-details">
-                            <div class="detail-item">
-                                <i class="bi bi-clock"></i>
-                                <span>Hoje ou amanhã</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="bi bi-geo-alt"></i>
-                                <span>Apenas região metropolitana</span>
-                            </div>
-                        </div>
-                        <div class="option-footer">
-                            <div class="option-price">
-                                <span class="price-label">Valor</span>
-                                <span class="price-value">R$ {{ freight.motoboy|floatformat:2 }}</span>
-                            </div>
-                            <button class="btn-select secondary">Selecionar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comparativo -->
-                <div class="comparison-footer">
-                    <div class="comparison-item">
-                        <span class="comparison-label">Mais Barato</span>
-                        <span class="comparison-value">R$ {{ freight.pac|floatformat:2 }}</span>
-                    </div>
-                    <div class="comparison-divider"></div>
-                    <div class="comparison-item">
-                        <span class="comparison-label">Mais Rápido</span>
-                        <span class="comparison-value">2 dias</span>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <!-- Estado Vazio -->
-            <div class="empty-results">
-                <div class="empty-illustration">
-                    <i class="bi bi-truck-flatbed"></i>
-                    <div class="empty-animation"></div>
-                </div>
-                <h3>Aguardando Cálculo</h3>
-                <p>Preencha os dados ao lado para calcular o frete e comparar as melhores opções de envio.</p>
-                
-                <div class="empty-features">
-                    <div class="feature-item">
-                        <i class="bi bi-lightning-charge"></i>
-                        <span>Cálculo instantâneo</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="bi bi-shield-check"></i>
-                        <span>Rastreamento incluso</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="bi bi-percent"></i>
-                        <span>Melhores preços</span>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_css %}
-<style>
-    .freight-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 24px;
-    }
-
-    /* Header */
-    .freight-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 32px;
-        padding: 28px;
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        border-radius: 20px;
-        color: white;
-    }
-
-    .header-title {
-        font-size: 1.8rem;
-        font-weight: 800;
-        margin: 0 0 4px 0;
-    }
-
-    .header-subtitle {
-        font-size: 0.95rem;
-        opacity: 0.9;
-        margin: 0;
-    }
-
-    .header-icon {
-        width: 64px;
-        height: 64px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-    }
-
-    /* Grid Layout */
-    .freight-grid {
-        display: grid;
-        grid-template-columns: 400px 1fr;
-        gap: 24px;
-        align-items: start;
-    }
-
-    /* Cards */
-    .card-freight {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-
-    .card-header-freight {
-        padding: 16px 20px;
-        background: var(--gray-50);
-        border-bottom: 1px solid var(--gray-200);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 700;
-        font-size: 0.9rem;
-        color: var(--gray-900);
-    }
-
-    /* Formulário */
-    .freight-form {
-        padding: 24px;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--gray-700);
-        margin-bottom: 8px;
-    }
-
-    .form-label i {
-        color: var(--primary);
-    }
-
-    .input-wrapper {
-        position: relative;
-        display: flex;
-        gap: 8px;
-    }
-
-    .form-input {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid var(--gray-200);
-        border-radius: 12px;
-        font-size: 0.95rem;
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-
-    .form-input:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-    }
-
-    .input-action {
-        width: 48px;
-        height: 48px;
-        border: none;
-        background: var(--primary);
-        color: white;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        flex-shrink: 0;
-    }
-
-    .input-action:hover {
-        background: var(--primary-dark);
-        transform: scale(1.05);
-    }
-
-    .form-hint {
-        display: block;
-        margin-top: 6px;
-        font-size: 0.75rem;
-        color: var(--gray-500);
-    }
-
-    /* Dimensões */
-    .dimensions-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-    }
-
-    .dimension-input {
-        background: var(--gray-50);
-        border: 2px solid var(--gray-200);
-        border-radius: 12px;
-        padding: 12px;
-        text-align: center;
-    }
-
-    .dimension-input label {
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 600;
-        color: var(--gray-600);
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .dimension-input input {
-        width: 100%;
-        border: none;
-        background: transparent;
-        text-align: center;
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--gray-900);
-    }
-
-    .dimension-input input:focus {
-        outline: none;
-    }
-
-    /* Botão Submit */
-    .btn-submit {
-        width: 100%;
-        padding: 16px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-top: 24px;
-    }
-
-    .btn-submit:hover {
-        background: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
-    }
-
-    .btn-submit:active {
-        transform: translateY(0);
-    }
-
-    /* Tip Box */
-    .tip-box {
-        display: flex;
-        gap: 12px;
-        padding: 16px;
-        background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-        border-radius: 12px;
-        margin-top: 16px;
-        font-size: 0.85rem;
-    }
-
-    .tip-box i {
-        font-size: 1.5rem;
-        color: #D97706;
-        flex-shrink: 0;
-    }
-
-    .tip-box strong {
-        color: #92400E;
-        display: block;
-        margin-bottom: 4px;
-    }
-
-    .tip-box p {
-        color: #78350F;
-        margin: 0;
-        line-height: 1.4;
-    }
-
-    /* Resultados */
-    .results-card {
-        position: sticky;
-        top: 24px;
-    }
-
-    .results-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--gray-200);
-    }
-
-    .results-header h3 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin: 0;
-    }
-
-    .results-count {
-        font-size: 0.8rem;
-        color: var(--gray-500);
-        font-weight: 600;
-    }
-
-    /* Opções de Frete */
-    .freight-options {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .freight-option {
-        border: 2px solid var(--gray-200);
-        border-radius: 16px;
-        padding: 20px;
-        position: relative;
-        transition: all 0.2s;
-    }
-
-    .freight-option:hover {
-        border-color: var(--primary);
-        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
-    }
-
-    .freight-option.recommended {
-        border-color: var(--success);
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(16, 185, 129, 0.05));
-    }
-
-    .option-badge {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        padding: 4px 12px;
-        background: var(--success);
-        color: white;
-        font-size: 0.7rem;
-        font-weight: 700;
-        border-radius: 20px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .option-badge.economy {
-        background: var(--primary);
-    }
-
-    .option-badge.local {
-        background: var(--warning);
-    }
-
-    .option-header {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 16px;
-    }
-
-    .option-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
-
-    .option-icon.sedex {
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        color: white;
-    }
-
-    .option-icon.pac {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-        color: white;
-    }
-
-    .option-icon.moto {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-
-    .option-info h4 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin: 0 0 2px 0;
-    }
-
-    .option-info p {
-        font-size: 0.8rem;
-        color: var(--gray-500);
-        margin: 0;
-    }
-
-    .option-details {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 16px;
-        padding: 12px;
-        background: var(--gray-50);
-        border-radius: 10px;
-    }
-
-    .detail-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
-        color: var(--gray-700);
-    }
-
-    .detail-item i {
-        color: var(--primary);
-        font-size: 1rem;
-    }
-
-    .option-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 16px;
-        border-top: 1px solid var(--gray-200);
-    }
-
-    .option-price {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .price-label {
-        font-size: 0.7rem;
-        color: var(--gray-500);
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .price-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: var(--gray-900);
-    }
-
-    .btn-select {
-        padding: 10px 24px;
-        background: var(--success);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-select:hover {
-        background: #16a34a;
-        transform: translateY(-2px);
-    }
-
-    .btn-select.secondary {
-        background: var(--primary);
-    }
-
-    .btn-select.secondary:hover {
-        background: var(--primary-dark);
-    }
-
-    /* Comparativo */
-    .comparison-footer {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 20px 24px;
-        background: var(--gray-50);
-        border-top: 1px solid var(--gray-200);
-    }
-
-    .comparison-item {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .comparison-label {
-        font-size: 0.75rem;
-        color: var(--gray-500);
-        font-weight: 600;
-    }
-
-    .comparison-value {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: var(--gray-900);
-    }
-
-    .comparison-divider {
-        width: 1px;
-        height: 40px;
-        background: var(--gray-200);
-    }
-
-    /* Empty State */
-    .empty-results {
-        background: white;
-        border-radius: 16px;
-        padding: 60px 40px;
-        text-align: center;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    }
-
-    .empty-illustration {
-        position: relative;
-        font-size: 5rem;
-        color: var(--gray-200);
-        margin-bottom: 24px;
-    }
-
-    .empty-animation {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--primary);
-        opacity: 0.3;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.3;
-        }
-        50% {
-            transform: translate(-50%, -50%) scale(1.5);
-            opacity: 0;
-        }
-    }
-
-    .empty-results h3 {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin: 0 0 8px 0;
-    }
-
-    .empty-results p {
-        font-size: 0.95rem;
-        color: var(--gray-500);
-        line-height: 1.6;
-        max-width: 400px;
-        margin: 0 auto 32px;
-    }
-
-    .empty-features {
-        display: flex;
-        justify-content: center;
-        gap: 24px;
-        flex-wrap: wrap;
-    }
-
-    .feature-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        padding: 16px;
-        background: var(--gray-50);
-        border-radius: 12px;
-    }
-
-    .feature-item i {
-        font-size: 1.5rem;
-        color: var(--primary);
-    }
-
-    .feature-item span {
-        font-size: 0.8rem;
-        color: var(--gray-700);
-        font-weight: 600;
-    }
-
-    /* Responsive */
-    @media (max-width: 992px) {
-        .freight-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .results-card {
-            position: relative;
-            top: 0;
-        }
-
-        .freight-header {
-            flex-direction: column;
-            gap: 16px;
-            text-align: center;
-        }
-
-        .header-icon {
-            order: -1;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .freight-container {
-            padding: 16px;
-        }
-
-        .freight-header {
-            padding: 20px;
-        }
-
-        .header-title {
-            font-size: 1.4rem;
-        }
-
-        .dimensions-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .empty-results {
-            padding: 40px 24px;
-        }
-
-        .empty-features {
-            flex-direction: column;
-        }
-    }
-</style>
-{% endblock %}
-
-{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const cepInput = document.getElementById('cep');
-    const btnSearchCep = document.getElementById('btnSearchCep');
-    const cepInfo = document.getElementById('cepInfo');
+    const feedback = document.getElementById('cep-feedback');
+    const submitBtn = document.getElementById('btnCalculate');
+    
+    if (!cepInput) return; // Se estiver na tela de resultados, sai do script
 
     // Máscara de CEP
     cepInput.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\D/g, '');
         if (value.length > 5) {
-            value = value.slice(0, 5) + '-' + value.slice(5, 8);
+            value = value.replace(/^(\d{5})(\d)/, '$1-$2');
         }
         e.target.value = value;
-    });
-
-    // Buscar CEP (API ViaCEP)
-    btnSearchCep.addEventListener('click', function() {
-        const cep = cepInput.value.replace(/\D/g, '');
         
-        if (cep.length !== 8) {
-            cepInfo.textContent = 'CEP inválido';
-            cepInfo.style.color = 'var(--danger)';
-            return;
-        }
-
-        cepInfo.textContent = 'Buscando...';
-        cepInfo.style.color = 'var(--primary)';
-
-        fetch(`https://viacep.com.br/ws/${cep}/json/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.erro) {
-                    cepInfo.textContent = 'CEP não encontrado';
-                    cepInfo.style.color = 'var(--danger)';
-                } else {
-                    cepInfo.textContent = `${data.localidade} - ${data.uf}`;
-                    cepInfo.style.color = 'var(--success)';
-                }
-            })
-            .catch(error => {
-                cepInfo.textContent = 'Erro ao buscar CEP';
-                cepInfo.style.color = 'var(--danger)';
-            });
+        // Limpa feedback se o usuário estiver digitando
+        feedback.textContent = '';
+        feedback.className = 'feedback-text';
+        cepInput.classList.remove('input-error', 'input-success');
     });
 
-    // Animação no botão de cálculo
-    const btnCalculate = document.getElementById('btnCalculate');
-    const form = document.getElementById('freightForm');
-    
-    form.addEventListener('submit', function() {
-        btnCalculate.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Calculando...';
-        btnCalculate.disabled = true;
+    // Validação ViaCEP ao sair do campo (blur)
+    cepInput.addEventListener('blur', async function() {
+        const cep = this.value.replace(/\D/g, '');
+
+        if (cep.length === 8) {
+            feedback.textContent = 'Buscando CEP...';
+            feedback.classList.add('loading');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+
+                if (data.erro) {
+                    throw new Error('CEP não encontrado');
+                }
+
+                // Sucesso
+                feedback.textContent = `${data.localidade} - ${data.uf}`;
+                feedback.className = 'feedback-text success';
+                cepInput.classList.add('input-success');
+                submitBtn.disabled = false;
+
+            } catch (error) {
+                // Erro
+                feedback.textContent = 'CEP inválido ou não encontrado.';
+                feedback.className = 'feedback-text error';
+                cepInput.classList.add('input-error');
+                submitBtn.disabled = true;
+            }
+        } else if (cep.length > 0) {
+            feedback.textContent = 'Formato de CEP inválido.';
+            feedback.className = 'feedback-text error';
+            cepInput.classList.add('input-error');
+        }
     });
 });
 </script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --secondary: #10b981;
+        --bg-color: #f3f4f6;
+        --card-bg: #ffffff;
+        --text-main: #1f2937;
+        --text-light: #6b7280;
+        --border-radius: 16px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Layout Geral */
+    .freight-container {
+        max-width: 600px; /* Mais estreito para focar a atenção */
+        margin: 2rem auto;
+        padding: 0 1rem;
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* Header */
+    .freight-header {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+    }
+
+    .header-content h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .header-content p {
+        margin: 0.25rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+
+    .header-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+
+    /* Formulário */
+    .form-wrapper {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+
+    .form-header h3 {
+        margin-top: 0;
+        color: var(--text-main);
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        padding-right: 3rem; /* Espaço para o ícone */
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.2s;
+        outline: none;
+    }
+
+    .form-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    .input-icon {
+        position: absolute;
+        right: 1rem;
+        color: var(--text-light);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Grid de Dimensões */
+    .dimensions-group {
+        background: #f9fafb;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .full-width {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .dim-input {
+        flex: 1;
+        text-align: center;
+    }
+
+    .dim-input span {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-light);
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+    }
+
+    .dim-input input {
+        width: 100%;
+        text-align: center;
+        padding: 0.5rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-submit:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .btn-submit:disabled {
+        background: var(--text-light);
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Feedback de Validação */
+    .feedback-text {
+        font-size: 0.8rem;
+        margin-top: 0.4rem;
+        min-height: 1.2rem;
+    }
+    .feedback-text.loading { color: var(--text-light); }
+    .feedback-text.success { color: var(--secondary); font-weight: 600; }
+    .feedback-text.error { color: #ef4444; font-weight: 600; }
+    
+    .form-input.input-error { border-color: #ef4444; }
+    .form-input.input-success { border-color: var(--secondary); }
+
+    /* Resultados */
+    .results-header-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow);
+    }
+
+    .result-info h2 { font-size: 1.1rem; margin: 0; }
+    .result-info p { margin: 0.2rem 0 0; color: var(--text-light); font-size: 0.9rem; }
+
+    .btn-new-quote {
+        background: #eff6ff;
+        color: var(--primary);
+        text-decoration: none;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .btn-new-quote:hover {
+        background: #e0e7ff;
+    }
+
+    .freight-card {
+        background: white;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        margin-bottom: 1rem;
+        border: 2px solid transparent;
+        transition: 0.2s;
+        position: relative;
+        box-shadow: var(--shadow);
+    }
+
+    .freight-card.sedex { border-color: #818cf8; }
+    .freight-card.pac { border-color: #34d399; }
+
+    .card-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--primary);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-bottom-left-radius: 10px;
+        text-transform: uppercase;
+    }
+    .card-badge.economy { background: var(--secondary); }
+
+    .card-body {
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .carrier-icon {
+        width: 60px;
+        height: 60px;
+        background: #e0e7ff;
+        color: var(--primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.9rem;
+    }
+    .carrier-icon.pac-icon { background: #d1fae5; color: #059669; }
+
+    .freight-details { flex: 1; }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
+    }
+    .detail-row .label { color: var(--text-light); }
+    .detail-row .value { font-weight: 600; color: var(--text-main); }
+
+    .freight-price {
+        text-align: right;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1;
+    }
+    .freight-price small {
+        display: block;
+        font-size: 0.65rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+    }
+
+    /* Animações */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+    .animate-slide-up { animation: slideUp 0.5s ease-out; }
+
+    /* Mobile */
+    @media (max-width: 576px) {
+        .freight-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        .card-body {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        .freight-price {
+            text-align: center;
+            width: 100%;
+            padding-top: 1rem;
+            border-top: 1px dashed #e5e7eb;
+        }
+        .results-header-card {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+    }
+</style>
 {% endblock %}

@@ -1,130 +1,85 @@
 {% extends 'base.html' %}
 
-{% block title %}Link Criado{% endblock %}
-{% block nav_links %}active{% endblock %}
+{% block title %}Link Criado com Sucesso{% endblock %}
 
 {% block content %}
 <div class="success-page">
 
-    <!-- Header -->
     <div class="success-header">
         <div class="success-icon-lg">
-            <i class="bi bi-check-lg"></i>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
         </div>
         <h2>Link Criado!</h2>
-        <p>Seu link de pagamento está pronto para ser enviado</p>
+        <p>Tudo pronto para receber o pagamento.</p>
     </div>
 
-    <!-- Card Resumo -->
-    <div class="card-app mb-3">
-        <div class="card-body">
-
-            <div class="text-center mb-4">
-                <span class="valor-label">Valor do Link</span>
-                <div class="valor-destaque">R$ {{ order.total }}</div>
-
-                {% if order.installments %}
-                    {% widthratio order.total order.installments 1 as parcela_bruta %}
-                    <span class="parcelas-info">
-                        em até {{ order.installments }}x
-                        de R$ {{ parcela_bruta|floatformat:2 }}
-                        sem juros
-                    </span>
-                {% else %}
-                    <span class="parcelas-info">Pagamento à vista</span>
-                {% endif %}
-            </div>
-
-            <div class="detalhes-resumo">
-                <div class="detalhe-item">
-                    <span class="detalhe-label">Cliente</span>
-                    <span class="detalhe-valor">{{ order.name }}</span>
-                </div>
-                <div class="detalhe-item">
-                    <span class="detalhe-label">Vendedor</span>
-                    <span class="detalhe-valor">{{ order.seller.name }}</span>
-                </div>
-                <div class="detalhe-item">
-                    <span class="detalhe-label">Valor do Produto</span>
-                    <span class="detalhe-valor">R$ {{ order.value }}</span>
-                </div>
-                <div class="detalhe-item">
-                    <span class="detalhe-label">Frete</span>
-                    <span class="detalhe-valor">R$ {{ order.value_freight }}</span>
-                </div>
-                <div class="detalhe-item">
-                    <span class="detalhe-label">Parcelas</span>
-                    <span class="detalhe-valor">
-                        {% if order.installments %}
-                            {{ order.installments }}x sem juros
-                        {% else %}
-                            À vista
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="detalhe-item">
-                    <span class="detalhe-label">Valor Final</span>
-                    <span class="detalhe-valor">R$ {{ order.total }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card Link -->
-    <div class="card-app mb-4">
-        <div class="card-body">
-            <label class="form-label-sm mb-2">Link de Pagamento</label>
-
-            {% if payment_link %}
-                <div class="link-box">
-                    <input type="text"
-                           class="link-input"
-                           id="linkGerado"
-                           value="{{ payment_link.url_link }}"
-                           readonly>
-
-                    <button type="button" class="btn-copiar" id="btnCopiar">
-                        <i class="bi bi-copy"></i>
-                    </button>
-                </div>
-
-                <div class="text-center mt-2">
-                    <small class="msg-copiado" id="msgCopiado">
-                        <i class="bi bi-check-circle-fill me-1"></i>Link copiado!
-                    </small>
-                </div>
+    <div class="card-summary mb-4">
+        <div class="valor-container">
+            <span class="valor-label">Valor do Link</span>
+            <div class="valor-destaque">R$ {{ order.total|floatformat:2 }}</div>
+            
+            {% if order.installments > 1 %}
+                <span class="status-badge-success">
+                    {{ order.installments }}x sem juros
+                </span>
             {% else %}
-                <p class="text-danger text-center">
-                    Nenhum link de pagamento encontrado.
-                </p>
+                <span class="status-badge-neutral">Pagamento à vista</span>
             {% endif %}
         </div>
+
+        <div class="detalhes-lista">
+            <div class="detalhe-linha">
+                <span>Cliente</span>
+                <strong>{{ order.name|truncatechars:25 }}</strong>
+            </div>
+            <div class="detalhe-linha">
+                <span>Vendedor</span>
+                <strong>{{ order.seller.name|truncatechars:25 }}</strong>
+            </div>
+            <div class="detalhe-linha sub-info">
+                <span>Produtos + Frete</span>
+                <span>R$ {{ order.value }} + R$ {{ order.value_freight }}</span>
+            </div>
+        </div>
     </div>
 
-    <!-- Ações -->
+    <div class="link-section mb-4">
+        <label class="section-label">Link de Pagamento</label>
+        {% if payment_link %}
+            <div class="link-copy-wrapper">
+                <input type="text" id="linkGerado" value="{{ payment_link.url_link }}" readonly>
+                <button id="btnCopiar" title="Copiar Link">
+                    <i class="bi bi-copy"></i>
+                </button>
+            </div>
+            <div id="msgCopiado" class="copy-alert">
+                <i class="bi bi-check-circle-fill"></i> Link copiado com sucesso!
+            </div>
+        {% else %}
+            <div class="alert alert-warning">Erro ao recuperar a URL do link.</div>
+        {% endif %}
+    </div>
+
     <div class="acoes-grid">
-        <button type="button" class="btn-acao btn-whatsapp" id="btnWhatsApp">
+        <button class="btn-share-action whatsapp" id="btnWhatsApp">
             <i class="bi bi-whatsapp"></i>
-            <span>Enviar no WhatsApp</span>
+            WhatsApp
         </button>
 
-        <button type="button" class="btn-acao btn-compartilhar" id="btnCompartilhar">
+        <button class="btn-share-action share" id="btnCompartilhar">
             <i class="bi bi-share"></i>
-            <span>Compartilhar</span>
+            Outros
         </button>
     </div>
 
-    <!-- Criar Novo -->
-    <div class="d-grid mt-4">
-        <a href="{% url 'orders:order-create' %}" class="btn btn-app btn-outline-app">
-            <i class="bi bi-plus-lg me-2"></i>Criar Novo Link
+    <div class="navigation-footer">
+        <a href="{% url 'orders:order-create' %}" class="btn-new-order">
+            <i class="bi bi-plus-lg"></i> Criar outro link
         </a>
-    </div>
-
-    <!-- Voltar -->
-    <div class="text-center mt-3">
-        <a href="#" class="link-voltar">
-            <i class="bi bi-arrow-left me-1"></i>Ver todos os links
+        <a href="#" class="link-back-list">
+            <i class="bi bi-list-ul"></i> Ver todos os links
         </a>
     </div>
 
@@ -133,135 +88,83 @@
 
 {% block extra_css %}
 <style>
-.success-page {
-    padding-top: 20px;
-}
+/* Estrutura Base */
+.success-page { max-width: 480px; margin: 0 auto; padding: 20px 15px; }
 
 /* Header */
-.success-header {
-    text-align: center;
-    margin-bottom: 32px;
-}
-
+.success-header { text-align: center; margin-bottom: 2rem; }
 .success-icon-lg {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
-    animation: scaleIn 0.4s ease;
+    width: 72px; height: 72px; background: #10b981; color: white;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
+.success-header h2 { font-weight: 800; color: #111827; margin-bottom: 0.25rem; }
+.success-header p { color: #6b7280; font-size: 0.95rem; }
 
-.success-icon-lg i {
-    font-size: 2.5rem;
-    color: #fff;
+/* Card Resumo */
+.card-summary { 
+    background: white; border-radius: 20px; border: 1px solid #e5e7eb;
+    padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
+.valor-container { text-align: center; margin-bottom: 1.5rem; }
+.valor-label { font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
+.valor-destaque { font-size: 2.5rem; font-weight: 800; color: #111827; letter-spacing: -1px; }
 
-@keyframes scaleIn {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); opacity: 1; }
-}
+.status-badge-success { background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.status-badge-neutral { background: #f3f4f6; color: #4b5563; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
 
-/* Valor */
-.valor-label {
-    font-size: .8rem;
-    color: var(--gray-500);
-    text-transform: uppercase;
-}
+.detalhes-lista { border-top: 1px solid #f3f4f6; padding-top: 1rem; }
+.detalhe-linha { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.5rem; }
+.sub-info { font-size: 0.8rem; color: #9ca3af; margin-top: 0.5rem; }
 
-.valor-destaque {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin: 8px 0;
+/* Link Input */
+.section-label { font-size: 0.8rem; font-weight: 700; color: #4b5563; margin-bottom: 0.5rem; display: block; }
+.link-copy-wrapper { 
+    display: flex; background: #f9fafb; border: 2px solid #e5e7eb; 
+    border-radius: 12px; overflow: hidden; transition: border-color 0.2s;
 }
+.link-copy-wrapper:focus-within { border-color: #3b82f6; }
+.link-copy-wrapper input { 
+    flex: 1; border: none; background: transparent; padding: 12px 15px;
+    font-family: monospace; font-size: 0.85rem; color: #374151; outline: none;
+}
+.link-copy-wrapper button { 
+    background: #3b82f6; color: white; border: none; padding: 0 15px; 
+    cursor: pointer; transition: background 0.2s;
+}
+.link-copy-wrapper button:active { background: #1d4ed8; }
 
-.parcelas-info {
-    font-size: .9rem;
-    color: var(--success);
+.copy-alert { 
+    font-size: 0.8rem; color: #10b981; text-align: center; margin-top: 0.5rem;
+    font-weight: 600; opacity: 0; transform: translateY(-5px); transition: all 0.3s;
 }
-
-/* Detalhes */
-.detalhes-resumo {
-    background: var(--gray-50);
-    border-radius: 12px;
-    padding: 16px;
-}
-
-.detalhe-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--gray-100);
-}
-
-.detalhe-item:last-child {
-    border-bottom: none;
-}
-
-/* Link */
-.link-box {
-    display: flex;
-    border-radius: 12px;
-    border: 1.5px solid var(--gray-200);
-    background: var(--gray-50);
-}
-
-.link-input {
-    flex: 1;
-    border: none;
-    padding: 14px 16px;
-    background: transparent;
-    font-family: monospace;
-}
-
-.link-input:focus {
-    outline: none;
-}
-
-.btn-copiar {
-    background: var(--primary);
-    border: none;
-    color: #fff;
-    padding: 14px 18px;
-}
-
-.msg-copiado {
-    opacity: 0;
-    color: var(--success);
-    transition: opacity .3s;
-}
-
-.msg-copiado.show {
-    opacity: 1;
-}
+.copy-alert.show { opacity: 1; transform: translateY(0); }
 
 /* Ações */
-.acoes-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+.acoes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-share-action {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; padding: 16px; border-radius: 16px; border: none; font-weight: 700;
+    font-size: 0.9rem; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
 }
+.btn-share-action:active { transform: scale(0.95); }
+.btn-share-action.whatsapp { background: #25D366; color: white; }
+.btn-share-action.share { background: #f3f4f6; color: #1f2937; }
 
-.btn-acao {
-    padding: 20px 16px;
-    border-radius: 16px;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
+/* Footer */
+.navigation-footer { margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; text-align: center; }
+.btn-new-order { 
+    background: #111827; color: white; padding: 14px; border-radius: 12px;
+    text-decoration: none; font-weight: 600; display: block;
 }
+.link-back-list { color: #6b7280; font-size: 0.9rem; text-decoration: none; font-weight: 500; }
 
-/* Botões */
-.btn-whatsapp {
-    background: #25D366;
-    color: #fff;
-}
-
-.btn-compartilhar {
-    background: var(--gray-100);
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); opacity: 1; }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); }
 }
 </style>
 {% endblock %}
@@ -269,15 +172,38 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const linkGerado = document.getElementById('linkGerado');
-    const btnCopiar = document.getElementById('btnCopiar');
-    const msgCopiado = document.getElementById('msgCopiado');
+    const linkInput = document.getElementById('linkGerado');
+    const url = linkInput ? linkInput.value : '';
 
-    btnCopiar?.addEventListener('click', () => {
-        linkGerado.select();
-        navigator.clipboard.writeText(linkGerado.value);
-        msgCopiado.classList.add('show');
-        setTimeout(() => msgCopiado.classList.remove('show'), 2000);
+    // 1. Função Copiar
+    document.getElementById('btnCopiar')?.addEventListener('click', () => {
+        linkInput.select();
+        navigator.clipboard.writeText(url);
+        const alert = document.getElementById('msgCopiado');
+        alert.classList.add('show');
+        setTimeout(() => alert.classList.remove('show'), 2500);
+    });
+
+    // 2. Enviar WhatsApp
+    document.getElementById('btnWhatsApp')?.addEventListener('click', () => {
+        const msg = encodeURIComponent(`Olá! Segue o seu link de pagamento no valor de R$ {{ order.total|floatformat:2 }}:\n\n${url}`);
+        window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+    });
+
+    // 3. Compartilhamento Nativo (Mobile)
+    document.getElementById('btnCompartilhar')?.addEventListener('click', async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Link de Pagamento',
+                    text: 'Pague seu pedido com facilidade através deste link:',
+                    url: url
+                });
+            } catch (err) { console.log('Erro ao compartilhar'); }
+        } else {
+            // Se não tiver suporte a share, apenas foca no copiar
+            document.getElementById('btnCopiar').click();
+        }
     });
 });
 </script>

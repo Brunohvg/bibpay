@@ -7,6 +7,7 @@ class CorreiosAPI:
     Cliente simples para consultar preço e prazo da API dos Correios.
     Tudo dinâmico. Você passa parâmetros, ela devolve os resultados.
     """
+    PRODUTOS_DEFAULT = ["03220", "03298"]  # SEDEX / PAC
 
     def __init__(self):
         self.token = config("MAIL_ACCESS_KEY")
@@ -37,18 +38,18 @@ class CorreiosAPI:
     # -------------------------
 
     def calcular(self,
-                 produtos: list,
                  cep_origem: str,
                  cep_destino: str,
-                 peso: int,
+                 peso: float, 
                  comprimento: int,
                  largura: int,
                  altura: int,
+                 produtos: list = None,
                  formato: int = 1):
         """
         produtos → lista de códigos ["03220", "03298"]
         """
-
+        produtos = produtos or self.PRODUTOS_DEFAULT
         id_lote = "lote-001"
 
         # ----- Monta params PREÇO -----
@@ -108,10 +109,10 @@ if __name__ == "__main__":
     api = CorreiosAPI()
 
     resultado = api.calcular(
-        produtos=["03220", "03298"],  # SEDEX / PAC
+        #produtos=["03220", "03298"],  # SEDEX / PAC
         cep_origem="30170903",
-        cep_destino="35384000",
-        peso=300,
+        cep_destino="34600190",
+        peso=25000,
         comprimento=22,
         largura=16,
         altura=18

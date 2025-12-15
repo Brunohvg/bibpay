@@ -510,13 +510,13 @@
             <i class="bi bi-link-45deg"></i>
             <span>Links</span>
         </a>
-        <a href="#" class="bottom-nav-item {% block nav_orders %}{% endblock %}">
+        <a href="{% url "orders:order-list" %}" class="bottom-nav-item {% block nav_orders %}{% endblock %}">
             <i class="bi bi-receipt"></i>
             <span>Pedidos</span>
         </a>
-        <a href="#" class="bottom-nav-item {% block nav_sellers %}{% endblock %}">
-            <i class="bi bi-people"></i>
-            <span>Equipe</span>
+        <a href="{% url "orders:order-frete" %}" class="bottom-nav-item {% block nav_sellers %}{% endblock %}">
+            <i class="bi bi-truck"></i>
+            <span>Frete & Prazo</span>
         </a>
     </nav>
 
