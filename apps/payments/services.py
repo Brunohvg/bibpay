@@ -220,3 +220,52 @@ def get_payment_statistics(start_date=None, end_date=None):
         count_canceled=Count('id', filter=Q(status='canceled')),
         count_failed=Count('id', filter=Q(status='failed')),
     )
+
+
+# ============================
+#   FUNÇÕES AUXILIARES PARA TESTES
+# ============================
+
+def get_payment_status(payment_id):
+    """Retorna o status de um pagamento específico."""
+    try:
+        payment = Payment.objects.get(id=payment_id)
+        return payment.status
+    except Payment.DoesNotExist:
+        return None
+
+
+def get_payment_links_by_order(order_id):
+    """Retorna todos os links de pagamento de um pedido."""
+    return PaymentLink.objects.filter(
+        order_id=order_id,
+        is_deleted=False
+    )
+
+
+def get_payment_by_link(link_id):
+    """Retorna o pagamento associado a um link de pagamento."""
+    try:
+        link = PaymentLink.objects.get(id=link_id)
+        return link.payment
+    except PaymentLink.DoesNotExist:
+        return None
+
+
+def cancel_payment_link(link_id):
+    """Cancela um link de pagamento."""
+    try:
+        link = PaymentLink.objects.get(id=link_id)
+        link.status = 'canceled'
+        link.save()
+        return True
+    except PaymentLink.DoesNotExist:
+        return False
+
+
+def list_payments_by_status(status):
+    """Lista pagamentos com um status específico."""
+    return Payment.objects.filter(
+        status=status,
+        is_deleted=False
+    )
