@@ -4,9 +4,10 @@ from django.views import View
 from django.views.generic import ListView
 from django.db.models import Q, Prefetch # Adicionado Prefetch
 from apps.orders.models import Order
-from apps.orders.services import create_order, list_orders
+from apps.orders.services import create_order, list_orders, calcular_frete
 from apps.sellers.services import list_sellers
 from apps.payments.models import Payment, PaymentLink
+
 
 
 class OrderCreateView(View):
@@ -165,3 +166,24 @@ class OrderListView(ListView):
         context['query_params'] = query_params.urlencode()
 
         return context
+
+class OrderFreteView(View):
+
+    def get(self, request):
+        return render(request, 'orders/order_frete.html')
+
+    def post(self, request):
+        # 'cep': ['34600190'], 'height': ['10'], 'width': ['15'], 'length': ['20']
+        api = calcular_frete(
+            data={
+                'cep_destino': request.POST.get('cep'),
+                'altura': request.POST.get('height'),
+                'largura': request.POST.get('width'),
+                'comprimento': request.POST.get('length'),
+            }
+        )
+        context = {
+            'api': api,
+        }
+        
+        return render(request, 'orders/order_frete.html', context)

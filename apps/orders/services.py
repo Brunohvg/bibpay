@@ -3,6 +3,8 @@ from apps.orders.models import Order
 from apps.orders.utils import formatar_valor
 from apps.sellers.services import get_seller
 from apps.core.integrations.pagarme import PagarMePaymentLink
+from apps.core.integrations.sgpweb import CorreiosAPI   
+
 
 
 def create_order(data):
@@ -53,3 +55,17 @@ def get_order(order_id):
 def filter_orders(**filters):
     return Order.objects.filter(**filters)
 
+
+def calcular_frete(data: dict):
+    api = CorreiosAPI()
+    return api.calcular(
+        produtos=["03220", "03298"],
+        cep_origem="30170903",
+        cep_destino=data.get("cep_destino", ""),
+        peso=data.get("peso", 0),
+        comprimento=data.get("comprimento", 0),
+        largura=data.get("largura", 0),
+        altura=data.get("altura", 0),
+        formato=data.get("formato", 1),
+    )
+    
