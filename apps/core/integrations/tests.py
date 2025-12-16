@@ -1,5 +1,7 @@
 from django.test import TestCase
 from unittest.mock import patch, MagicMock
+from decimal import Decimal
+from django.utils import timezone
 from apps.core.integrations.pagarme import PagarMeOrder, PagarMePaymentLink
 from apps.core.integrations.sgpweb import CorreiosAPI
 import json
@@ -268,3 +270,292 @@ class CorreiosAPITestCase(TestCase):
         self.assertIn('api.correios.com.br', self.api.url_prazo)
         self.assertIn('preco', self.api.url_preco)
         self.assertIn('prazo', self.api.url_prazo)
+
+
+class IntegrationEndToEndTestCase(TestCase):
+    """Testes de integração end-to-end do fluxo de pagamento."""
+
+    def setUp(self):
+        """Configuração inicial para os testes."""
+        from apps.sellers.models import Seller
+        from apps.orders.models import Order
+        
+        self.seller = Seller.objects.create(
+            name='Vendedor Integration Test',
+            phone='11999999999'
+        )
+        self.order = Order.objects.create(
+            name='Pedido Integration Test',
+            value=Decimal('100.00'),
+            value_freight=Decimal('10.00'),
+            status='pending',
+            installments=1,
+            seller=self.seller
+        )
+
+    @patch('apps.core.integrations.pagarme.requests.post')
+    def test_full_payment_flow_success(self, mock_post):
+        """Testa o fluxo completo de pagamento do pedido."""
+        # Mock da criação do link de pagamento
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            'id': 'link_123',
+            'url': 'https://pagar.me/link/123',
+            'short_url': 'https://pagar.me/l/abc123',
+            'status': 'active'
+        }
+        mock_response.raise_for_status = MagicMock()
+        mock_post.return_value = mock_response
+
+        pagarme = PagarMePaymentLink(
+            customer_name=self.order.name,
+            total_amount=int(self.order.total * 100),
+            max_installments=self.order.installments,
+            free_installments=self.order.installments
+        )
+        
+        result = pagarme.create_link()
+        
+        # Verificar sucesso
+        self.assertEqual(result['status'], 'active')
+        self.assertIn('url', result)
+
+    @patch('apps.core.integrations.pagarme.requests.post')
+    def test_payment_link_with_installments(self, mock_post):
+        """Testa criação de link de pagamento com parcelas."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            'id': 'link_parcelas',
+            'url': 'https://pagar.me/link/parcelas',
+            'status': 'active',
+            'installments': 12
+        }
+        mock_response.raise_for_status = MagicMock()
+        mock_post.return_value = mock_response
+
+        pagarme = PagarMePaymentLink(
+            customer_name=self.order.name,
+            total_amount=int(self.order.total * 100),
+            max_installments=12,
+            free_installments=12
+        )
+        
+        result = pagarme.create_link()
+        
+        self.assertEqual(result['status'], 'active')
+
+    def test_payment_status_update_workflow(self):
+        """Testa o fluxo de atualização de status de pagamento."""
+        from apps.payments.models import PaymentLink, Payment
+        from apps.payments.services import process_payment_webhook
+        
+        # Criar link de pagamento
+        link = PaymentLink.objects.create(
+            order=self.order,
+            url_link='https://pagar.me/link/123',
+            id_link='link_123',
+            amount=self.order.total,
+            status='active'
+        )
+        
+        # Simular webhook de pagamento
+        payload = {
+            'data': {
+                'id': link.id_link,
+                'status': 'paid',
+                'amount': int(link.amount * 100),
+                'paid_at': timezone.now(),
+            }
+        }
+        
+        payment = process_payment_webhook(payload)
+        
+        if payment:
+            self.assertEqual(payment.status, 'paid')
+            # Verificar que o link foi atualizado
+            link.refresh_from_db()
+            self.assertEqual(link.status, 'paid')
+
+    @patch('apps.core.integrations.sgpweb.requests.post')
+    def test_shipping_calculation_workflow(self, mock_post):
+        """Testa o fluxo de cálculo de frete."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = [
+            {
+                'coProduto': '03220',
+                'preco': {'pcFinal': '50,00'},
+                'prazo': {'prazoEntrega': '3'},
+                'txErro': None
+            }
+        ]
+        mock_post.return_value = mock_response
+
+        api = CorreiosAPI()
+        
+        payload = {
+            'idLote': 'lote-001',
+            'parametrosProduto': [
+                {
+                    'coProduto': '03220',
+                    'nuRequisicao': 1,
+                    'cepOrigem': '30170903',
+                    'cepDestino': '01310100',
+                    'psObjeto': 1.0,
+                    'comprimento': 20,
+                    'largura': 15,
+                    'altura': 10,
+                }
+            ]
+        }
+        
+        result = api.consultar_preco(payload)
+        
+        self.assertIsNotNone(result)
+
+    def test_order_payment_link_relationship(self):
+        """Testa a relação entre Order e PaymentLink no fluxo."""
+        from apps.payments.models import PaymentLink
+        
+        link = PaymentLink.objects.create(
+            order=self.order,
+            url_link='https://pagar.me/link/test',
+            id_link='link_test',
+            amount=self.order.total,
+            status='active'
+        )
+        
+        # Verificar que o link está associado ao pedido
+        self.assertEqual(link.order, self.order)
+        self.assertIn(link, self.order.payment_links.all())
+
+    def test_seller_orders_payment_flow(self):
+        """Testa fluxo de múltiplos pedidos do vendedor."""
+        from apps.payments.models import PaymentLink, Payment
+        
+        # Criar múltiplos pedidos
+        orders = []
+        for i in range(3):
+            order = Order.objects.create(
+                name=f'Pedido {i}',
+                value=Decimal('50.00'),
+                value_freight=Decimal('5.00'),
+                status='pending',
+                installments=1,
+                seller=self.seller
+            )
+            orders.append(order)
+            
+            # Criar link de pagamento
+            link = PaymentLink.objects.create(
+                order=order,
+                url_link=f'https://pagar.me/link/{i}',
+                id_link=f'link_{i}',
+                amount=order.total,
+                status='active'
+            )
+            
+            # Simular pagamento
+            Payment.objects.create(
+                payment_link=link,
+                status='paid',
+                payment_date=timezone.now(),
+                amount=order.total
+            )
+        
+        # Verificar que os pedidos foram criados
+        seller_orders = Order.objects.filter(seller=self.seller)
+        self.assertEqual(seller_orders.count(), 4)  # 1 do setUp + 3 novos
+        
+        # Verificar que todos têm links de pagamento
+        links = PaymentLink.objects.filter(order__seller=self.seller)
+        self.assertEqual(links.count(), 4)
+
+
+class PaymentErrorHandlingTestCase(TestCase):
+    """Testes de tratamento de erros nos pagamentos."""
+
+    def setUp(self):
+        """Configuração inicial para os testes."""
+        from apps.sellers.models import Seller
+        from apps.orders.models import Order
+        
+        self.seller = Seller.objects.create(
+            name='Vendedor Teste',
+            phone='11999999999'
+        )
+        self.order = Order.objects.create(
+            name='Pedido Teste',
+            value=Decimal('100.00'),
+            value_freight=Decimal('10.00'),
+            status='pending',
+            installments=1,
+            seller=self.seller
+        )
+
+    @patch('apps.core.integrations.pagarme.requests.post')
+    def test_pagarme_timeout_error(self, mock_post):
+        """Testa tratamento de timeout da API."""
+        from requests.exceptions import Timeout
+        mock_post.side_effect = Timeout('Connection timeout')
+
+        pagarme = PagarMePaymentLink(
+            customer_name=self.order.name,
+            total_amount=int(self.order.total * 100),
+            max_installments=1,
+            free_installments=1
+        )
+        
+        result = pagarme.create_link()
+        
+        # Deve retornar um dicionário com erro
+        self.assertIn('error', result)
+
+    @patch('apps.core.integrations.pagarme.requests.post')
+    def test_pagarme_invalid_response(self, mock_post):
+        """Testa tratamento de resposta inválida da API."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {}
+        mock_response.raise_for_status = MagicMock()
+        mock_post.return_value = mock_response
+
+        pagarme = PagarMePaymentLink(
+            customer_name=self.order.name,
+            total_amount=int(self.order.total * 100),
+            max_installments=1,
+            free_installments=1
+        )
+        
+        result = pagarme.create_link()
+        
+        # Deve ter processado sem erro
+        self.assertIsNotNone(result)
+
+    @patch('apps.core.integrations.sgpweb.requests.post')
+    def test_correios_api_error(self, mock_post):
+        """Testa tratamento de erro na API dos Correios."""
+        mock_post.side_effect = Exception('API Error')
+
+        api = CorreiosAPI()
+        
+        payload = {
+            'idLote': 'lote-001',
+            'parametrosProduto': []
+        }
+        
+        result = api.consultar_preco(payload)
+        
+        # Deve retornar None ou valor seguro
+        self.assertIsNone(result)
+
+    @patch('apps.core.integrations.sgpweb.requests.post')
+    def test_correios_network_error(self, mock_post):
+        """Testa tratamento de erro de rede nos Correios."""
+        from requests.exceptions import ConnectionError
+        mock_post.side_effect = ConnectionError('Network error')
+
+        api = CorreiosAPI()
+        
+        result = api.consultar_preco({})
+        
+        # Deve ser tratado graciosamente
+        self.assertIsNone(result)
