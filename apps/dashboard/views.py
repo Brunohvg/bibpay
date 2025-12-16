@@ -1,5 +1,5 @@
 # ==================================================================
-# ARQUIVO COMPLETO: apps/dashboard/views.py
+# ARQUIVO COMPLETO: apps/dashboard/views.py 
 # ==================================================================
 from datetime import timedelta
 from decimal import Decimal
