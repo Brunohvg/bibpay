@@ -10,3 +10,25 @@ wheels/
 .venv
 .env
 .coverage
+
+# Database files
+*.sqlite3
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build and dist
+htmlcov/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
