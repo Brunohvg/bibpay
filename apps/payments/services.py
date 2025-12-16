@@ -104,7 +104,7 @@ def process_payment_webhook(webhook_data):
     try:
         data = webhook_data.get("data", {})
         charge_id = data.get("id")
-        
+        #print(f"→ Processando webhook para charge {charge_id}")
         payment_link = PaymentLink.objects.filter(id_link=charge_id).first()
         
         if not payment_link:
@@ -119,6 +119,7 @@ def process_payment_webhook(webhook_data):
             "failed": "failed",
             "refunded": "refunded",
             "chargeback": "chargeback",
+            "inactive": "inactive",
         }
         
         payment_status = status_map.get(data.get("status"), "pending")

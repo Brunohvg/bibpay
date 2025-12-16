@@ -8,6 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('orders/', include('apps.orders.urls')),
     #path('sellers/', include('apps.sellers.urls')),
+    path('payments/', include('apps.payments.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
