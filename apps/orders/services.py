@@ -86,9 +86,16 @@ def list_orders():
     return Order.objects.all()
 
 
-def get_order(order_id):
+def get_order(pk):
     """Busca um pedido pelo ID."""
-    return get_object_or_404(Order, id=order_id)
+    return get_object_or_404(Order, pk=pk)
+
+def get_latest_payment_link(order):
+    return (
+        order.payment_links
+        .order_by('-created_at')
+        .first()
+    )
 
 
 def filter_orders(**filters):

@@ -1,182 +1,301 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    {% if link.status == 'paid' %}Link Já Pago
-    {% elif link.status == 'expired' %}Link Expirado
-    {% else %}Link Indisponível{% endif %}
+    {% if payment_link.status == 'expired' %}
+        Link Expirado
+    {% elif payment_link.status == 'canceled' %}
+        Link Cancelado
+    {% else %}
+        Link Indisponível
+    {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="status-page">
 
-    {# --- HEADER COM ÍCONE DINÂMICO --- #}
+    <!-- HEADER -->
     <div class="status-header">
-        {% if link.status == 'paid' %}
-            <div class="status-icon-lg info">
-                <i class="bi bi-check-all" style="font-size: 2rem;"></i>
-            </div>
-            <h2>Pagamento Realizado!</h2>
-            <p>Este link já foi utilizado e o pagamento foi confirmado.</p>
-
-        {% elif link.status == 'expired' %}
+        {% if payment_link.status == 'expired' %}
             <div class="status-icon-lg warning">
-                <i class="bi bi-hourglass-bottom" style="font-size: 1.8rem;"></i>
+                <i class="bi bi-hourglass-bottom"></i>
             </div>
             <h2>Link Expirado</h2>
             <p>O prazo para pagamento deste link encerrou.</p>
 
+        {% elif payment_link.status == 'canceled' %}
+            <div class="status-icon-lg danger">
+                <i class="bi bi-x-lg"></i>
+            </div>
+            <h2>Link Cancelado</h2>
+            <p>Este link foi cancelado e não pode mais ser utilizado.</p>
+
         {% else %}
             <div class="status-icon-lg danger">
-                <i class="bi bi-x-lg" style="font-size: 1.8rem;"></i>
+                <i class="bi bi-x-circle"></i>
             </div>
             <h2>Link Indisponível</h2>
-            <p>Este link foi cancelado ou não existe mais.</p>
+            <p>Este link não está mais disponível.</p>
         {% endif %}
     </div>
 
-    {# --- CARD DE RESUMO DO PEDIDO --- #}
-    <div class="card-summary mb-4">
-        
-        <div class="status-stripe {% if link.status == 'paid' %}info{% elif link.status == 'expired' %}warning{% else %}danger{% endif %}"></div>
+    <!-- CARD -->
+    <div class="card-summary">
 
-        <div class="p-4">
+        <div class="status-stripe
+            {% if payment_link.status == 'expired' %}warning
+            {% elif payment_link.status == 'canceled' %}danger
+            {% else %}danger{% endif %}
+        "></div>
+
+        <div class="card-body">
+
             <div class="valor-container">
-                <span class="valor-label">Valor Original</span>
-                <div class="valor-destaque {{ link.status }}">
-                    R$ {{ link.amount|floatformat:2 }}
+                <span class="valor-label">Valor</span>
+                <div class="valor-destaque {{ payment_link.status }}">
+                    R$ {{ payment_link.amount|floatformat:2 }}
                 </div>
-                <div class="mt-2">
-                    <span class="status-pill {{ link.status }}">
-                        {% if link.status == 'paid' %}Pago em {{ link.updated_at|date:"d/m/Y - H:i" }}
-                        {% elif link.status == 'expired' %}Venceu em {{ link.expiration_date|default:link.updated_at|date:"d/m/Y" }}
-                        {% else %}Cancelado{% endif %}
-                    </span>
-                </div>
+
+                <span class="status-pill {{ payment_link.status }}">
+                    {% if payment_link.status == 'expired' %}
+                        Venceu em {{ payment_link.expiration_date|default:payment_link.updated_at|date:"d/m/Y" }}
+                    {% elif payment_link.status == 'canceled' %}
+                        Cancelado
+                    {% else %}
+                        Indisponível
+                    {% endif %}
+                </span>
             </div>
 
             <div class="divider"></div>
 
             <div class="detalhes-lista">
                 <div class="detalhe-linha">
-                    <span>Referente a</span>
-                    <strong>{{ link.order.name|default:"Pedido Diversos"|truncatechars:25 }}</strong>
+                    <span>Pedido</span>
+                    <strong>{{ payment_link.order.name|default:"Pedido"|truncatechars:25 }}</strong>
                 </div>
                 <div class="detalhe-linha">
                     <span>Vendedor</span>
-                    <strong>{{ link.order.seller.name|default:"Loja" }}</strong>
+                    <strong>{{ payment_link.order.seller.name|default:"Loja" }}</strong>
                 </div>
                 <div class="detalhe-linha">
-                    <span>ID da Transação</span>
-                    <span class="font-monospace text-muted small">#{{ link.id|stringformat:"06d" }}</span>
+                    <span>ID do Link</span>
+                    <span class="mono">#{{ payment_link.id|stringformat:"06d" }}</span>
                 </div>
             </div>
+
         </div>
     </div>
 
-    {# --- AÇÕES SUGERIDAS --- #}
+    <!-- AÇÕES -->
     <div class="actions-section">
-        {% if link.status == 'expired' or link.status == 'canceled' %}
-            <p class="help-text">Precisa realizar este pagamento? Solicite um novo link.</p>
-            
-            <a href="https://api.whatsapp.com/send?phone=55{{ link.order.seller.phone|default:'' }}&text=Olá, o link do pedido #{{ link.order.pk }} expirou. Poderia gerar um novo?" 
-               class="btn-action primary" target="_blank">
+
+        {% if payment_link.status == 'expired' or payment_link.status == 'canceled' %}
+            <p class="help-text">
+                Precisa concluir o pagamento? Solicite um novo link.
+            </p>
+
+            <a
+                href="https://api.whatsapp.com/send?phone=55{{ payment_link.order.seller.phone|default:''|urlencode }}&text={{ 'Olá, o link do pedido #'|add:payment_link.order.pk|add:' expirou. Poderia gerar um novo?'|urlencode }}"
+                target="_blank"
+                class="btn-action primary"
+            >
                 <i class="bi bi-whatsapp"></i> Contatar Vendedor
-            </a>
-        
-        {% elif link.status == 'paid' %}
-            <p class="help-text">Você pode visualizar o recibo desta transação.</p>
-            
-            <a href="{% url 'orders:order-recibo' link.order.pk %}" class="btn-action success">
-                <i class="bi bi-receipt"></i> Ver Comprovante
             </a>
         {% endif %}
 
-        <a href="/" class="btn-action ghost mt-2">
-            <i class="bi bi-arrow-left"></i> Voltar ao Início
+        <a href="/" class="btn-action ghost">
+            <i class="bi bi-arrow-left"></i> Voltar ao início
         </a>
-    </div>
 
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-/* --- Layout Base --- */
-.status-page { max-width: 480px; margin: 40px auto; padding: 0 20px; font-family: 'Inter', sans-serif; }
 
-/* --- Header --- */
-.status-header { text-align: center; margin-bottom: 2.5rem; }
-.status-header h2 { font-size: 1.75rem; font-weight: 800; color: #1f2937; margin-top: 1rem; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
-.status-header p { color: #6b7280; font-size: 1rem; line-height: 1.5; }
+/* ===== LAYOUT ===== */
+.status-page {
+    max-width: 480px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: Inter, system-ui, sans-serif;
+}
 
-/* Ícones Animados */
+/* ===== HEADER ===== */
+.status-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.status-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 16px 0 6px;
+}
+
+.status-header p {
+    color: #6b7280;
+}
+
+/* ===== ICON ===== */
 .status-icon-lg {
-    width: 80px; height: 80px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto; color: white;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-    animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: #fff;
+    font-size: 1.8rem;
+    animation: popIn .6s ease;
 }
 
-/* Cores de Estado */
-.status-icon-lg.warning { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4); }
-.status-icon-lg.danger { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 10px 20px -5px rgba(239, 68, 68, 0.4); }
-.status-icon-lg.info { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4); }
+.status-icon-lg.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
 
-/* --- Card Summary --- */
+.status-icon-lg.danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+/* ===== CARD ===== */
 .card-summary {
-    background: white; border-radius: 24px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-    overflow: hidden; position: relative; border: 1px solid rgba(0,0,0,0.02);
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 20px 30px rgba(0,0,0,.06);
+    overflow: hidden;
 }
 
-/* Faixa Colorida no Topo do Card */
-.status-stripe { height: 6px; width: 100%; }
+.status-stripe {
+    height: 6px;
+}
+
 .status-stripe.warning { background: #f59e0b; }
 .status-stripe.danger { background: #ef4444; }
-.status-stripe.info { background: #3b82f6; }
 
-.valor-container { text-align: center; }
-.valor-label { font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
-.valor-destaque { font-size: 2.2rem; font-weight: 800; color: #111827; margin: 5px 0; }
-.valor-destaque.expired, .valor-destaque.canceled { opacity: 0.6; text-decoration: line-through; text-decoration-color: #ef4444; text-decoration-thickness: 2px; }
+.card-body {
+    padding: 24px;
+}
 
-/* Status Pill */
-.status-pill { display: inline-block; padding: 6px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; }
-.status-pill.warning, .status-pill.expired { background: #fef3c7; color: #92400e; }
-.status-pill.danger, .status-pill.canceled { background: #fee2e2; color: #991b1b; }
-.status-pill.info, .status-pill.paid { background: #dbeafe; color: #1e40af; }
+/* ===== VALOR ===== */
+.valor-container {
+    text-align: center;
+}
 
-.divider { height: 1px; background: #f3f4f6; margin: 1.5rem 0; }
+.valor-label {
+    font-size: .75rem;
+    text-transform: uppercase;
+    color: #9ca3af;
+    font-weight: 700;
+}
 
-.detalhes-lista { display: flex; flex-direction: column; gap: 12px; }
-.detalhe-linha { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; color: #4b5563; }
-.detalhe-linha strong { color: #111827; font-weight: 600; }
+.valor-destaque {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 6px 0;
+}
 
-/* --- Ações --- */
-.actions-section { text-align: center; margin-top: 2rem; }
-.help-text { font-size: 0.9rem; color: #6b7280; margin-bottom: 1rem; }
+.valor-destaque.expired,
+.valor-destaque.canceled {
+    opacity: .6;
+    text-decoration: line-through;
+}
+
+/* ===== STATUS ===== */
+.status-pill {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.status-pill.expired {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-pill.canceled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ===== DETALHES ===== */
+.divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 20px 0;
+}
+
+.detalhes-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.detalhe-linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: .95rem;
+    color: #4b5563;
+}
+
+.mono {
+    font-family: monospace;
+    color: #6b7280;
+}
+
+/* ===== ACTIONS ===== */
+.actions-section {
+    margin-top: 28px;
+    text-align: center;
+}
+
+.help-text {
+    margin-bottom: 14px;
+    color: #6b7280;
+    font-size: .9rem;
+}
 
 .btn-action {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; padding: 14px; border-radius: 14px; font-weight: 600; text-decoration: none;
-    transition: all 0.2s ease; font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: .2s;
 }
-.btn-action:hover { transform: translateY(-2px); }
 
-.btn-action.primary { background: #111827; color: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-.btn-action.primary:hover { background: #000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15); }
+.btn-action.primary {
+    background: #111827;
+    color: #fff;
+}
 
-.btn-action.success { background: #10b981; color: white; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); }
-.btn-action.success:hover { background: #059669; }
+.btn-action.primary:hover {
+    transform: translateY(-2px);
+}
 
-.btn-action.ghost { background: transparent; color: #6b7280; border: 1px solid transparent; }
-.btn-action.ghost:hover { background: #f9fafb; color: #374151; }
+.btn-action.ghost {
+    margin-top: 10px;
+    color: #6b7280;
+}
 
+.btn-action.ghost:hover {
+    background: #f9fafb;
+}
+
+/* ===== ANIMATION ===== */
 @keyframes popIn {
-    0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
-    70% { transform: scale(1.1) rotate(5deg); }
-    100% { opacity: 1; transform: scale(1) rotate(0); }
+    from { opacity: 0; transform: scale(.7); }
+    to { opacity: 1; transform: scale(1); }
 }
+
 </style>
 {% endblock %}

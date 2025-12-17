@@ -1,14 +1,21 @@
 from datetime import datetime, timedelta
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.views import View
 from django.views.generic import ListView
 from django.db.models import Prefetch
 
 from apps.orders.models import Order
-from apps.orders.services import create_order, list_orders, calcular_frete
+from apps.orders.services import (
+    create_order,
+    list_orders,
+    calcular_frete,
+    get_order,
+    get_latest_payment_link,
+)
 from apps.sellers.services import list_sellers
 from apps.payments.models import PaymentLink
+
 
 
 class OrderCreateView(View):
@@ -25,33 +32,22 @@ class OrderCreateView(View):
 
     def post(self, request):
         order = create_order(request.POST.dict())
-
-        payment_link = (
-            order.payment_links
-            .order_by('-created_at')
-            .first()
-        )
+        payment_link = get_latest_payment_link(order)
 
         return render(
             request,
             'orders/order_success.html',
             {
                 'order': order,
-                'payment_link': payment_link,  # pode ser None (template deve tratar)
+                'payment_link': payment_link,
             }
         )
-
 
 class OrderSuccessView(View):
 
     def get(self, request, pk):
-        order = get_object_or_404(Order, pk=pk)
-
-        payment_link = (
-            order.payment_links
-            .order_by('-created_at')
-            .first()
-        )
+        order = get_order(pk)
+        payment_link = get_latest_payment_link(order)
 
         if not payment_link:
             return render(
@@ -63,10 +59,7 @@ class OrderSuccessView(View):
                 }
             )
 
-
         payment = getattr(payment_link, 'payment', None)
-
-        
 
         if payment and payment.status == 'paid':
             return render(
@@ -79,9 +72,15 @@ class OrderSuccessView(View):
                 }
             )
 
+        match payment_link.status:
+            case 'expired' | 'canceled':
+                template = 'orders/payment_link_status.html'
+            case _:
+                template = 'orders/order_success.html'
+
         return render(
             request,
-            'orders/order_success.html',
+            template,
             {
                 'order': order,
                 'payment_link': payment_link,
@@ -96,7 +95,6 @@ class OrderListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-
         payment_links_qs = PaymentLink.objects.select_related('payment')
 
         prefetch_links = Prefetch(
