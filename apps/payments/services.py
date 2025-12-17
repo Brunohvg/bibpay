@@ -1,5 +1,5 @@
 # =================================================================
-# ARQUIVO COMPLETO: apps/payments/services.py (CORRIGIDO)
+# ARQUIVO COMPLETO: apps/payments/services.py
 # =================================================================
 
 from decimal import Decimal
@@ -7,79 +7,75 @@ from django.db import transaction
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 
-# Importações dos seus modelos
 from apps.payments.models import PaymentLink, Payment
 
-# =================================================================
-# CORREÇÃO: Importação da classe de integração
-# =================================================================
-# Se sua classe de integração está em apps.core.integrations.pagarme
-from apps.core.integrations.pagarme import PagarMePaymentLink 
-# =================================================================
+# Integração Pagar.me
+from apps.core.integrations.pagarme import PagarMePaymentLink
 
 
-# ============================
-#   CRIAÇÃO DE LINK DE PAGAMENTO
-# ============================
+# ================================================================
+# CRIAÇÃO DE LINK DE PAGAMENTO
+# ================================================================
 
 def process_payment_link_for_order(order):
-    """Gera o link de pagamento via API do Pagar.me e salva no banco."""
+    """
+    Gera um link de pagamento via Pagar.me e salva no banco.
+    """
     try:
-        # 1. Gera o link via API do Pagar.me
         link_data = generate_payment_link(order)
         if not link_data:
-            print(f"✗ Erro ao gerar link para order {order.id}: API retornou vazio")
+            print(f"✗ Erro ao gerar link para Order {order.id}")
             return None
 
-        # 2. Salva no banco
         payment_link = create_payment_link_record(order, link_data)
         if not payment_link:
-            print(f"✗ Erro ao salvar link para order {order.id}")
+            print(f"✗ Erro ao salvar PaymentLink da Order {order.id}")
             return None
-        
-        print(f"✓ Link criado com sucesso para order {order.id}: {payment_link.url_link}")
+
+        print(f"✓ PaymentLink criado: {payment_link.url_link}")
         return payment_link
-        
+
     except Exception as e:
-        print(f"✗ Erro inesperado ao processar link para order {order.id}: {e}")
+        print(f"✗ Erro inesperado ao criar PaymentLink: {e}")
         return None
 
 
 def generate_payment_link(order):
-    """Chama a API do Pagar.me para criar um link de pagamento."""
+    """
+    Chama a API do Pagar.me para gerar o link de pagamento.
+    """
     try:
-        # A classe PagarMePaymentLink agora está importada e definida.
-        pagarme = PagarMePaymentLink( 
+        pagarme = PagarMePaymentLink(
             customer_name=order.name,
-            total_amount=int(order.total * 100),   # Pagar.me exige em centavos
+            total_amount=int(order.total * 100),  # centavos
             max_installments=order.installments,
             free_installments=order.installments,
         )
 
-        # Chama o método create_link() da sua classe de integração
         response = pagarme.create_link()
-        
         if not response:
-            print("✗ API do Pagar.me não retornou resposta")
             return None
 
         link_id = response.get("id")
         link_url = response.get("url") or response.get("short_url")
 
         if not link_id or not link_url:
-            print(f"✗ API do Pagar.me retornou dados incompletos: {response}")
             return None
 
-        return {"id": link_id, "url": link_url}
+        return {
+            "id": link_id,
+            "url": link_url,
+        }
 
     except Exception as e:
-        # Este print agora funcionará corretamente após a correção da importação
-        print(f"✗ Erro ao chamar API do Pagar.me: {e}") 
+        print(f"✗ Erro API Pagar.me: {e}")
         return None
 
 
 def create_payment_link_record(order, link_data):
-    """Salva o PaymentLink no banco de dados."""
+    """
+    Persiste o PaymentLink no banco.
+    """
     try:
         return PaymentLink.objects.create(
             order=order,
@@ -87,31 +83,33 @@ def create_payment_link_record(order, link_data):
             url_link=link_data["url"],
             amount=order.total,
             status="active",
+            is_active=True,
         )
     except Exception as e:
-        print(f"✗ Erro ao salvar PaymentLink no banco: {e}")
+        print(f"✗ Erro ao salvar PaymentLink: {e}")
         return None
 
 
-# ============================
-#   WEBHOOK - PROCESSAR PAGAMENTO (PRONTO PARA USO)
-# ============================
+# ================================================================
+# WEBHOOK – PROCESSAMENTO DE PAGAMENTO
+# ================================================================
 
 def process_payment_webhook(webhook_data):
     """
-    Processa o webhook, garante unicidade do Payment e sincroniza status.
+    Processa eventos do webhook do Pagar.me.
+    Garante:
+    - Um Payment por PaymentLink (OneToOne)
+    - Sincronização de status (Payment, PaymentLink e Order)
     """
     try:
         data = webhook_data.get("data", {})
         charge_id = data.get("id")
-        #print(f"→ Processando webhook para charge {charge_id}")
+
         payment_link = PaymentLink.objects.filter(id_link=charge_id).first()
-        
         if not payment_link:
-            print(f"✗ PaymentLink não encontrado para charge {charge_id}")
+            print(f"✗ PaymentLink não encontrado: {charge_id}")
             return None
-        
-        # Mapear status do Pagar.me para nosso sistema
+
         status_map = {
             "paid": "paid",
             "pending": "pending",
@@ -121,13 +119,11 @@ def process_payment_webhook(webhook_data):
             "chargeback": "chargeback",
             "inactive": "inactive",
         }
-        
+
         payment_status = status_map.get(data.get("status"), "pending")
-        
-        # Inicia uma transação atômica para garantir consistência
+
         with transaction.atomic():
-            
-            # Tenta buscar ou criar Payment. OneToOneField garante a unicidade.
+
             payment, created = Payment.objects.get_or_create(
                 payment_link=payment_link,
                 defaults={
@@ -136,108 +132,104 @@ def process_payment_webhook(webhook_data):
                     "payment_date": data.get("paid_at") or timezone.now(),
                 }
             )
-            
-            # 1. Se já existe, apenas atualiza status
+
+            # Atualiza Payment se já existir
             if not created and payment.status != payment_status:
                 payment.status = payment_status
-                payment.save()
+                payment.save(update_fields=["status"])
 
-            # 2. Sincroniza Status do PaymentLink
+            # Atualiza PaymentLink
             final_statuses = ["paid", "canceled", "failed", "refunded", "chargeback"]
-            
-            if payment_status in final_statuses and payment_link.status != payment_status:
-                payment_link.status = payment_status
-                payment_link.is_active = False # Marca como inativo após a resolução
-                payment_link.save()
 
-            # 3. Sincroniza Status do Order
+            if payment_status in final_statuses:
+                payment_link.status = payment_status
+                payment_link.is_active = False
+                payment_link.save(update_fields=["status", "is_active"])
+
+            # Atualiza Order
             order = payment_link.order
-            if order.status != payment_status:
-                if payment_status in ["paid", "canceled"]:
-                     order.status = payment_status
-                elif payment_status in ["failed", "refunded", "chargeback"]:
-                     order.status = "canceled" 
-                order.save()
-        
-        print(f"✓ Payment {'criado' if created else 'atualizado'}: {payment.id} - Status: {payment_status}")
+            if payment_status == "paid":
+                order.status = "paid"
+            elif payment_status in ["canceled", "failed", "refunded", "chargeback"]:
+                order.status = "canceled"
+
+            order.save(update_fields=["status"])
+
+        print(f"✓ Payment {'criado' if created else 'atualizado'} | {payment_status}")
         return payment
-        
+
     except Exception as e:
-        print(f"✗ Erro ao processar webhook: {e}")
+        print(f"✗ Erro webhook: {e}")
         return None
 
 
-# ============================
-#   LISTAGENS / CONSULTAS
-# ============================
+# ================================================================
+# CONSULTAS / LISTAGENS
+# ================================================================
 
 def get_payment_links_for_order(order):
-    """Retorna todos os PaymentLinks de um pedido."""
     return PaymentLink.objects.filter(
         order=order,
         is_active=True,
         is_deleted=False
     )
 
+
 def list_active_payment_links():
-    """Lista todos os PaymentLinks com status 'active'."""
     return PaymentLink.objects.filter(
         status="active",
         is_active=True,
         is_deleted=False
     )
 
+
 def list_payments(**filters):
-    """Lista pagamentos aplicando filtros opcionais."""
     qs = Payment.objects.filter(is_active=True, is_deleted=False)
     if filters:
         qs = qs.filter(**filters)
     return qs
 
+
 def calculate_total_from_links(objects):
-    """Soma o campo 'amount' de Payment ou PaymentLink."""
     total = Decimal("0")
     for obj in objects:
         if obj.amount:
-            total += Decimal(str(obj.amount))
+            total += Decimal(obj.amount)
     return total
 
+
 def get_payment_statistics(start_date=None, end_date=None):
-    """Retorna estatísticas consolidadas de pagamentos."""
     qs = Payment.objects.all()
-    
+
     if start_date:
         qs = qs.filter(payment_date__gte=start_date)
     if end_date:
         qs = qs.filter(payment_date__lte=end_date)
-    
+
     return qs.aggregate(
-        total_paid=Sum('amount', filter=Q(status='paid')) or Decimal('0'),
-        total_pending=Sum('amount', filter=Q(status='pending')) or Decimal('0'),
-        total_canceled=Sum('amount', filter=Q(status='canceled')) or Decimal('0'),
-        total_failed=Sum('amount', filter=Q(status='failed')) or Decimal('0'),
-        count_paid=Count('id', filter=Q(status='paid')),
-        count_pending=Count('id', filter=Q(status='pending')),
-        count_canceled=Count('id', filter=Q(status='canceled')),
-        count_failed=Count('id', filter=Q(status='failed')),
+        total_paid=Sum("amount", filter=Q(status="paid")) or Decimal("0"),
+        total_pending=Sum("amount", filter=Q(status="pending")) or Decimal("0"),
+        total_canceled=Sum("amount", filter=Q(status="canceled")) or Decimal("0"),
+        total_failed=Sum("amount", filter=Q(status="failed")) or Decimal("0"),
+        count_paid=Count("id", filter=Q(status="paid")),
+        count_pending=Count("id", filter=Q(status="pending")),
+        count_canceled=Count("id", filter=Q(status="canceled")),
+        count_failed=Count("id", filter=Q(status="failed")),
     )
 
 
-# ============================
-#   FUNÇÕES AUXILIARES PARA TESTES
-# ============================
+# ================================================================
+# AUXILIARES
+# ================================================================
 
 def get_payment_status(payment_id):
-    """Retorna o status de um pagamento específico."""
     try:
-        payment = Payment.objects.get(id=payment_id)
-        return payment.status
+        return Payment.objects.get(id=payment_id).status
     except Payment.DoesNotExist:
         return None
 
 
 def get_payment_links_by_order(order_id):
-    """Retorna todos os links de pagamento de um pedido."""
     return PaymentLink.objects.filter(
         order_id=order_id,
         is_deleted=False
@@ -245,27 +237,24 @@ def get_payment_links_by_order(order_id):
 
 
 def get_payment_by_link(link_id):
-    """Retorna o pagamento associado a um link de pagamento."""
     try:
-        link = PaymentLink.objects.get(id=link_id)
-        return link.payment
+        return PaymentLink.objects.get(id=link_id).payment
     except PaymentLink.DoesNotExist:
         return None
 
 
 def cancel_payment_link(link_id):
-    """Cancela um link de pagamento."""
     try:
         link = PaymentLink.objects.get(id=link_id)
-        link.status = 'canceled'
-        link.save()
+        link.status = "canceled"
+        link.is_active = False
+        link.save(update_fields=["status", "is_active"])
         return True
     except PaymentLink.DoesNotExist:
         return False
 
 
 def list_payments_by_status(status):
-    """Lista pagamentos com um status específico."""
     return Payment.objects.filter(
         status=status,
         is_deleted=False

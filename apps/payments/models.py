@@ -17,12 +17,11 @@ PAYMENT_STATUS = (
 
 PAYMENT_LINK_STATUS = (
     ("active", "Ativo"),
-    ("pending", "Pendente"),
-    ("inactive", "Inativo"),
     ("expired", "Expirado"),
-    ("paid", "Pago"), # Adicionado para refletir o status final
-    ("canceled", "Cancelado"), # Adicionado para refletir o status final
+    ("used", "Usado"),
+    ("canceled", "Cancelado"),
 )
+
 
 
 class PaymentLink(BaseModel):
@@ -38,7 +37,7 @@ class PaymentLink(BaseModel):
     status = models.CharField(
         max_length=50,
         choices=PAYMENT_LINK_STATUS,
-        default="pending",
+        default="active",
         verbose_name="Status",
     )
 
