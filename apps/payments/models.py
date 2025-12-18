@@ -8,12 +8,16 @@ from django.db.models import OneToOneField # Importação necessária
 
 PAYMENT_STATUS = (
     ("pending", "Pendente"),
+    ("processing", "Processando"),
     ("paid", "Pago"),
     ("failed", "Falhou"),
     ("canceled", "Cancelado"),
     ("refunded", "Reembolsado"),
     ("chargeback", "Chargeback"),
+    ("overpaid", "Pago a mais"),
+    ("underpaid", "Pago a menos"),
 )
+
 
 PAYMENT_LINK_STATUS = (
     ("active", "Ativo"),

@@ -8,10 +8,12 @@ from apps.orders.utils import formatar_valor
 
 
 STATUS_CHOICES = (
-    ('paid', 'Pago'),
     ('pending', 'Pendente'),
+    ('paid', 'Pago'),
+    ('failed', 'Falhou'),
     ('canceled', 'Cancelado'),
 )
+
 
 class Order(BaseModel):
     name = models.CharField(max_length=255, verbose_name='Nome', help_text='Nome do pedido')

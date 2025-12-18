@@ -6,6 +6,7 @@
 {% block content %}
 <div class="app-container">
 
+    <!-- HEADER -->
     <header class="app-header">
         <div class="user-info">
             <h1>Olá, {{ request.user.first_name|default:'Visitante' }}!</h1>
@@ -16,29 +17,36 @@
         </div>
     </header>
 
+    <!-- HERO -->
     <div class="hero-card">
         <div class="hero-body">
             <span class="hero-label">Receita Total</span>
+
             <div class="hero-main">
-                <h2 class="hero-value">R$ {{ total_received|floatformat:2|default:"0,00" }}</h2>
+                <h2 class="hero-value">
+                    R$ {{ total_received|floatformat:2|default:"0,00" }}
+                </h2>
                 <a href="{% url 'orders:order-create' %}" class="btn-hero-add">
                     <i class="bi bi-plus-lg"></i>
                 </a>
             </div>
-            
+
             <div class="hero-footer">
                 <div class="hero-stat">
                     <i class="bi bi-arrow-up-right"></i>
-                    <span>{{ paid_links_count }} Pagos</span>
+                    <span>{{ total_pagos }} Pagos</span>
                 </div>
                 <div class="hero-stat opacity-75">
                     <i class="bi bi-clock"></i>
-                    <span>R$ {{ valor_em_aberto|floatformat:2|default:"0" }} Pend.</span>
+                    <span>
+                        R$ {{ valor_em_aberto|floatformat:2|default:"0,00" }} Pend.
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- STATS -->
     <div class="stats-grid">
         <div class="stat-box">
             <span class="stat-number primary">{{ total_links_criados|default:"0" }}</span>
@@ -54,34 +62,57 @@
         </div>
     </div>
 
+    <!-- CONVERSÃO -->
     <div class="section-card">
         <div class="conversion-header">
             <span class="section-title">Conversão</span>
             <span class="conversion-value">{{ taxa_conversao|default:"0" }}%</span>
         </div>
+
         <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: {{ taxa_conversao|default:'0' }}%;"></div>
+            <div
+                class="progress-bar-fill"
+                style="width: {{ taxa_conversao|default:'0' }}%;">
+            </div>
         </div>
-        <p class="conversion-footer">{{ total_pagos }} vendas de {{ total_links_criados }} links</p>
+
+        <p class="conversion-footer">
+            {{ total_pagos }} vendas de {{ total_links_criados }} links
+        </p>
     </div>
 
+    <!-- AÇÕES RÁPIDAS -->
     <div class="quick-actions-grid">
         <a href="{% url 'orders:order-create' %}" class="action-btn">
-            <div class="icon-circle primary"><i class="bi bi-link-45deg"></i></div>
+            <div class="icon-circle primary">
+                <i class="bi bi-link-45deg"></i>
+            </div>
             <span>Link</span>
         </a>
-        <a href="#" class="action-btn"> <div class="icon-circle success"><i class="bi bi-truck"></i></div>
+
+        <a href="#" class="action-btn">
+            <div class="icon-circle success">
+                <i class="bi bi-truck"></i>
+            </div>
             <span>Frete</span>
         </a>
-        <a href="#" class="action-btn"> <div class="icon-circle warning"><i class="bi bi-person"></i></div>
+
+        <a href="#" class="action-btn">
+            <div class="icon-circle warning">
+                <i class="bi bi-person"></i>
+            </div>
             <span>Perfil</span>
         </a>
+
         <a href="{% url 'orders:order-list' %}" class="action-btn">
-            <div class="icon-circle dark"><i class="bi bi-list-ul"></i></div>
+            <div class="icon-circle dark">
+                <i class="bi bi-list-ul"></i>
+            </div>
             <span>Pedidos</span>
         </a>
     </div>
 
+    <!-- LINKS RECENTES -->
     <div class="recent-section">
         <div class="section-header">
             <h3>Links Recentes</h3>
@@ -91,19 +122,32 @@
         <div class="recent-list">
             {% for item in recent_links %}
             <a href="{% url 'orders:order-success' item.order.pk %}" class="list-item">
+
                 <div class="item-icon {{ item.status_display.class }}">
                     <i class="bi bi-{{ item.status_display.icon }}"></i>
                 </div>
+
                 <div class="item-info">
-                    <span class="item-name">{{ item.order.name|truncatechars:20 }}</span>
+                    <span class="item-name">
+                        {{ item.order.name|truncatechars:20 }}
+                    </span>
                     <span class="item-desc">
-                        {% if item.order.installments > 1 %}{{ item.order.installments }}x{% else %}À vista{% endif %} 
+                        {% if item.order.installments > 1 %}
+                            {{ item.order.installments }}x
+                        {% else %}
+                            À vista
+                        {% endif %}
                         • {{ item.days_ago }}
                     </span>
                 </div>
+
                 <div class="item-values">
-                    <span class="item-price">R$ {{ item.link.amount|floatformat:2 }}</span>
-                    <span class="item-status {{ item.status_display.class }}">{{ item.status_display.label }}</span>
+                    <span class="item-price">
+                        R$ {{ item.link.amount|floatformat:2 }}
+                    </span>
+                    <span class="item-status {{ item.status_display.class }}">
+                        {{ item.status_display.label }}
+                    </span>
                 </div>
             </a>
             {% empty %}

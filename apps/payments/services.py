@@ -94,74 +94,228 @@ def create_payment_link_record(order, link_data):
 # WEBHOOK – PROCESSAMENTO DE PAGAMENTO
 # ================================================================
 
+""""
+{
+  "id": "hook_G9VNgX2i4CLJnX4Q",
+  "account": {
+    "id": "acc_6XgnEXwu8tN51xOd",
+    "name": "LOJA BIBELÔ"
+  },
+  "type": "charge.paid",
+  "created_at": "2025-12-18T14:47:08.9346361Z",
+  "data": {
+    "amount": 38940,
+    "code": "pl_pWy9k1ObMo2z3VZSX2Tpbgr3dZB5Q0qL",
+    "created_at": "2025-12-18T14:46:53",
+    "currency": "BRL",
+    "customer": {
+      "address": {
+        "city": "Belo Horizonte",
+        "country": "BR",
+        "created_at": "2025-12-18T14:46:52",
+        "id": "addr_e4W6KGxIG0tRav8Y",
+        "line_1": "676, Avenida General Olímpio Mourão Filho, Itapoã",
+        "neighborhood": "Itapoã",
+        "number": "676",
+        "state": "MG",
+        "status": "active",
+        "street": "Avenida General Olímpio Mourão Filho",
+        "updated_at": "2025-12-18T14:46:52",
+        "zip_code": "31710-690"
+      },
+      "created_at": "2025-12-18T14:45:53",
+      "delinquent": false,
+      "document": "87543010682",
+      "document_type": "cpf",
+      "email": "andreamarquesgarcia2017@gmail.com",
+      "id": "cus_gpAx8ylCxCd0r0Wv",
+      "name": "Andrea Marques da",
+      "phones": {
+        "mobile_phone": {
+          "area_code": "31",
+          "country_code": "55",
+          "number": "994558666"
+        }
+      },
+      "type": "individual",
+      "updated_at": "2025-12-18T14:46:52"
+    },
+    "gateway_id": "4215644227",
+    "id": "ch_a59b0d7HDwf218AG",
+    "last_transaction": {
+      "acquirer_auth_code": "075433",
+      "acquirer_message": "Transação aprovada com sucesso",
+      "acquirer_name": "pagarme",
+      "acquirer_nsu": "4215644227",
+      "acquirer_return_code": "0000",
+      "acquirer_tid": "4215644227",
+      "amount": 38940,
+      "antifraud_response": {
+        "provider_name": "pagarme",
+        "score": "moderated",
+        "status": "approved"
+      },
+      "brand_id": "VR56TI",
+      "card": {
+        "billing_address": {
+          "city": "Belo Horizonte",
+          "country": "BR",
+          "line_1": "676, Avenida General Olímpio Mourão Filho, Itapoã",
+          "state": "MG",
+          "zip_code": "31710-690"
+        },
+        "brand": "Mastercard",
+        "created_at": "2025-12-18T14:46:53",
+        "exp_month": 9,
+        "exp_year": 2028,
+        "first_six_digits": "520018",
+        "holder_name": "APPLE PAY",
+        "id": "card_jGEJnLBFm6hXNrB8",
+        "last_four_digits": "4857",
+        "status": "active",
+        "tokenization_method": "apple_pay",
+        "type": "credit",
+        "updated_at": "2025-12-18T14:46:53"
+      },
+      "created_at": "2025-12-18T14:46:53",
+      "funding_source": "credit",
+      "gateway_id": "4215644227",
+      "gateway_response": {
+        "code": "200",
+        "errors": []
+      },
+      "id": "tran_g6OARJ17SvIa8Dln",
+      "installments": 3,
+      "metadata": {},
+      "operation_type": "auth_and_capture",
+      "status": "captured",
+      "success": true,
+      "transaction_type": "credit_card",
+      "updated_at": "2025-12-18T14:46:53"
+    },
+    "metadata": {
+      "session_id": "session_kBxn3NRjgZ1agr0c4KSVeOzVrm98MJ64"
+    },
+    "order": {
+      "amount": 38940,
+      "closed": true,
+      "closed_at": "2025-12-18T14:46:53",
+      "code": "pl_pWy9k1ObMo2z3VZSX2Tpbgr3dZB5Q0qL",
+      "created_at": "2025-12-18T14:46:53",
+      "currency": "BRL",
+      "customer_id": "cus_gpAx8ylCxCd0r0Wv",
+      "id": "or_AepadppiqC4oablQ",
+      "metadata": {
+        "session_id": "session_kBxn3NRjgZ1agr0c4KSVeOzVrm98MJ64"
+      },
+      "status": "paid",
+      "updated_at": "2025-12-18T14:46:57"
+    },
+    "paid_amount": 38940,
+    "paid_at": "2025-12-18T14:46:57",
+    "payment_method": "credit_card",
+    "status": "paid",
+    "updated_at": "2025-12-18T14:46:57"
+  }
+}
+
+"""
+from decimal import Decimal
+from django.db import transaction
+from django.utils import timezone
+
+from apps.payments.models import Payment, PaymentLink
+
+
 def process_payment_webhook(webhook_data):
     """
     Processa eventos do webhook do Pagar.me.
-    Garante:
-    - Um Payment por PaymentLink (OneToOne)
-    - Sincronização de status (Payment, PaymentLink e Order)
+
+    Atualiza corretamente:
+    - Payment (dinheiro)
+    - PaymentLink (estado do link)
+    - Order (estado do pedido)
     """
-    try:
-        data = webhook_data.get("data", {})
-        charge_id = data.get("id")
 
-        payment_link = PaymentLink.objects.filter(id_link=charge_id).first()
-        if not payment_link:
-            print(f"✗ PaymentLink não encontrado: {charge_id}")
-            return None
+    data = webhook_data.get("data", {})
+    charge_id = data.get("code")
 
-        status_map = {
-            "paid": "paid",
-            "pending": "pending",
-            "canceled": "canceled",
-            "failed": "failed",
-            "refunded": "refunded",
-            "chargeback": "chargeback",
-            "inactive": "inactive",
-        }
+    payment_link = (
+        PaymentLink.objects
+        .select_related("order")
+        .filter(id_link=charge_id)
+        .first()
+    )
 
-        payment_status = status_map.get(data.get("status"), "pending")
-
-        with transaction.atomic():
-
-            payment, created = Payment.objects.get_or_create(
-                payment_link=payment_link,
-                defaults={
-                    "status": payment_status,
-                    "amount": Decimal(str(data.get("amount", 0))) / 100,
-                    "payment_date": data.get("paid_at") or timezone.now(),
-                }
-            )
-
-            # Atualiza Payment se já existir
-            if not created and payment.status != payment_status:
-                payment.status = payment_status
-                payment.save(update_fields=["status"])
-
-            # Atualiza PaymentLink
-            final_statuses = ["paid", "canceled", "failed", "refunded", "chargeback"]
-
-            if payment_status in final_statuses:
-                payment_link.status = payment_status
-                payment_link.is_active = False
-                payment_link.save(update_fields=["status", "is_active"])
-
-            # Atualiza Order
-            order = payment_link.order
-            if payment_status == "paid":
-                order.status = "paid"
-            elif payment_status in ["canceled", "failed", "refunded", "chargeback"]:
-                order.status = "canceled"
-
-            order.save(update_fields=["status"])
-
-        print(f"✓ Payment {'criado' if created else 'atualizado'} | {payment_status}")
-        return payment
-
-    except Exception as e:
-        print(f"✗ Erro webhook: {e}")
+    if not payment_link:
+        print(f"✗ PaymentLink não encontrado: {charge_id}")
         return None
 
+    pagarme_status = data.get("status")
+
+    # STATUS FINANCEIROS VÁLIDOS
+    payment_status_map = {
+        "pending": "pending",
+        "processing": "processing",
+        "paid": "paid",
+        "failed": "failed",
+        "canceled": "canceled",
+        "refunded": "refunded",
+        "chargeback": "chargeback",
+        "overpaid": "overpaid",
+        "underpaid": "underpaid",
+    }
+
+    payment_status = payment_status_map.get(pagarme_status)
+
+    if not payment_status:
+        print(f"⚠ Status ignorado: {pagarme_status}")
+        return None
+
+    amount = Decimal(str(data.get("amount", 0))) / 100
+    paid_at = data.get("paid_at")
+
+    with transaction.atomic():
+
+        payment, created = Payment.objects.get_or_create(
+            payment_link=payment_link,
+            defaults={
+                "status": payment_status,
+                "amount": amount,
+                "payment_date": paid_at or timezone.now(),
+            }
+        )
+
+        if not created and payment.status != payment_status:
+            payment.status = payment_status
+            payment.save(update_fields=["status"])
+
+        # --------------------------------------------------
+        # PAYMENT LINK (estado do link)
+        # --------------------------------------------------
+        if payment_status in ["paid", "overpaid", "underpaid"]:
+            payment_link.status = "used"
+
+        elif payment_status in ["failed", "canceled"]:
+            payment_link.status = "canceled"
+
+        payment_link.save(update_fields=["status"])
+
+        # --------------------------------------------------
+        # ORDER (estado comercial)
+        # --------------------------------------------------
+        order = payment_link.order
+
+        if payment_status in ["paid", "overpaid", "underpaid"]:
+            order.status = "paid"
+
+        elif payment_status in ["failed", "canceled", "refunded", "chargeback"]:
+            order.status = "canceled"
+
+        order.save(update_fields=["status"])
+
+    print(f"✓ Payment {'criado' if created else 'atualizado'} | {payment_status}")
+    return payment
 
 # ================================================================
 # CONSULTAS / LISTAGENS
