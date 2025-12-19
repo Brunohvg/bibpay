@@ -272,7 +272,7 @@ def process_payment_webhook(webhook_data):
         print(f"⚠ Status ignorado: {pagarme_status}")
         return None
 
-    amount = Decimal(str(data.get("amount", 0))) / 100
+    amount = Decimal(str(data.get("paid_amount", 0))) / 100
     paid_at = data.get("paid_at")
 
     with transaction.atomic():
