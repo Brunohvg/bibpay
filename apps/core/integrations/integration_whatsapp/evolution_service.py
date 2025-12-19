@@ -1,7 +1,7 @@
 # evolution_service.py
 import logging
 from typing import List
-from integrations.integration_whatsapp.whatsapp import get_evolution_client
+from apps.core.integrations.integration_whatsapp.whatsapp import get_evolution_client
 from evolutionapi.models.message import TextMessage
 
 # Logger
