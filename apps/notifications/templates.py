@@ -13,3 +13,16 @@ def payment_confirmed_message(value: float) -> str:
 Valor: R$ {value:.2f}
 Obrigado!
 """
+
+def generic_notification_message(content: str) -> str:
+    return f"""
+🔔 *Notificação*
+
+{content}
+""" 
+
+def alert_message(title: str, body: str) -> str:
+    return f"""
+🚨 *{title}*
+{body}
+"""
