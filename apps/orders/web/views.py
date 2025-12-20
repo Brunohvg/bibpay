@@ -36,32 +36,33 @@ class OrderCreateView(View):
             }
         )
 
-
 class OrderSuccessView(View):
 
     def get(self, request, pk):
         order = get_order(pk)
         payment_link = get_latest_payment_link(order)
 
-        if not payment_link:
-            template = "orders/order_success.html"
-        elif getattr(payment_link.payment, "status", None) == "paid":
-            template = "orders/order_recibo.html"
-        elif payment_link.status in {"expired", "canceled"}:
-            template = "orders/payment_link_status.html"
-        else:
-            template = "orders/order_success.html"
+        payment = None
+        template = "orders/order_success.html"
+
+        if payment_link:
+            payment = getattr(payment_link, "payment", None)
+
+            if payment and payment.status == "paid":
+                template = "orders/order_recibo.html"
+
+            elif payment_link.status in {"expired", "canceled"}:
+                template = "orders/payment_link_status.html"
 
         return render(
             request,
             template,
             {
                 "order": order,
-                "payment": getattr(payment_link, "payment", None),
+                "payment": payment,
                 "payment_link": payment_link,
             }
         )
-
 
 class OrderListView(ListView):
     template_name = "orders/order_list.html"

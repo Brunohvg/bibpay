@@ -3,14 +3,7 @@ Domain de Pedido.
 Contém SOMENTE regras de negócio.
 """
 
-def build_order(
-    *,
-    name: str,
-    value: float,
-    freight: float,
-    installments: int,
-    seller
-) -> dict:
+def build_order(*, name: str, value: float, freight: float, installments: int, seller) -> dict:
     if not name or not name.strip():
         raise ValueError("Nome do cliente é obrigatório")
 
