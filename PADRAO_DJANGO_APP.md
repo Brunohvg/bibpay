@@ -263,3 +263,27 @@ API	JSON
 👉 Copia, cola, adapta e segue o jogo.
 
 Agora vai codar. 🚀
+
+
+apps/
+└── <app_name>/
+    ├── api/
+    │   └── v1/
+    │       ├── urls.py
+    │       ├── views.py
+    │       └── serializers.py
+    │
+    ├── web/
+    │   └── views.py
+    │
+    ├── domain/
+    │   └── rules.py
+    │
+    ├── services/
+    │   ├── commands.py
+    │   └── queries.py
+    │
+    ├── signals.py
+    ├── models.py
+    ├── urls.py
+    └── admin.py

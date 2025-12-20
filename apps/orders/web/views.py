@@ -9,7 +9,7 @@ from apps.orders.services.order_service import (
 )
 from apps.orders.services.order_query_service import list_orders_filtered
 from apps.orders.services.freight_service import calcular_frete_from_request
-from apps.sellers.services import list_sellers
+from apps.sellers.services.queries import list_sellers
 
 
 class OrderCreateView(View):
