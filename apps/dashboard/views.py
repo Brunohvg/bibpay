@@ -1,6 +1,17 @@
 # ==================================================================
-# apps/dashboard/views.py (CORRIGIDO E ALINHADO COM PAGAR.ME)
+# apps/dashboard/views.py
+# Dashboard = QUERY / READ SIDE
+# Responsabilidade:
+# - Ler dados
+# - Agregar métricas
+# - Preparar contexto para UI
+#
+# NÃO:
+# - Dispara comandos
+# - Altera estado
+# - Contém regra de negócio
 # ==================================================================
+
 from datetime import timedelta
 from decimal import Decimal
 
@@ -17,7 +28,7 @@ class DashboardHomeView(TemplateView):
     template_name = "dashboard/dashboard.html"
 
     # ==============================================================
-    # STATUS VISUAL (UI)
+    # STATUS VISUAL (UI ONLY)
     # ==============================================================
 
     def _get_status_display(self, link, payment):
@@ -46,7 +57,7 @@ class DashboardHomeView(TemplateView):
         return link_status_map.get(link.status, link_status_map["active"])
 
     # ==============================================================
-    # AUXILIARES
+    # HELPERS
     # ==============================================================
 
     def _calculate_days_ago(self, date):
@@ -62,7 +73,8 @@ class DashboardHomeView(TemplateView):
         weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 
         counts_by_date = (
-            PaymentLink.objects.filter(created_at__date__gte=start_date.date())
+            PaymentLink.objects
+            .filter(created_at__date__gte=start_date.date())
             .annotate(date=TruncDate("created_at"))
             .values("date")
             .annotate(count=Count("id"))
@@ -86,7 +98,7 @@ class DashboardHomeView(TemplateView):
 
         max_count = max((d["count"] for d in chart_data), default=1)
         for data in chart_data:
-            data["height"] = int((data["count"] / max_count) * 100) if max_count > 0 else 0
+            data["height"] = int((data["count"] / max_count) * 100) if max_count else 0
 
         return chart_data
 
@@ -103,8 +115,9 @@ class DashboardHomeView(TemplateView):
         fourteen_days_ago = now - timedelta(days=14)
 
         # ----------------------------------------------------------
-        # FINANCEIRO (SÓ PAYMENT)
+        # FINANCEIRO (PAYMENT)
         # ----------------------------------------------------------
+
         payments_stats = Payment.objects.filter(
             payment_date__gte=thirty_days_ago
         ).aggregate(
@@ -119,8 +132,9 @@ class DashboardHomeView(TemplateView):
         )
 
         # ----------------------------------------------------------
-        # PIPELINE (SÓ PAYMENTLINK)
+        # PIPELINE (PAYMENT LINK)
         # ----------------------------------------------------------
+
         links_qs = PaymentLink.objects.filter(created_at__gte=thirty_days_ago)
 
         links_stats = links_qs.aggregate(
@@ -129,7 +143,6 @@ class DashboardHomeView(TemplateView):
             total_canceled=Count("id", filter=Q(status="canceled")),
         )
 
-        # Links em aberto = ativos sem pagamento pago
         links_em_aberto_qs = PaymentLink.objects.filter(
             status="active"
         ).filter(
@@ -146,6 +159,7 @@ class DashboardHomeView(TemplateView):
         # ----------------------------------------------------------
         # MÉTRICAS
         # ----------------------------------------------------------
+
         total_received = payments_stats["total_received"] or Decimal("0")
         total_paid = payments_stats["total_paid"] or 0
         total_links = links_stats["total_links"] or 0
@@ -158,8 +172,10 @@ class DashboardHomeView(TemplateView):
         # ----------------------------------------------------------
         # LINKS RECENTES
         # ----------------------------------------------------------
+
         recent_links = (
-            PaymentLink.objects.filter(created_at__gte=thirty_days_ago)
+            PaymentLink.objects
+            .filter(created_at__gte=thirty_days_ago)
             .select_related("order", "order__seller", "payment")
             .order_by("-created_at")[:4]
         )
@@ -178,57 +194,59 @@ class DashboardHomeView(TemplateView):
             )
 
         # ----------------------------------------------------------
-        # GRÁFICO E CRESCIMENTO
+        # GRÁFICO / CRESCIMENTO
         # ----------------------------------------------------------
+
         chart_data = self._get_chart_data(seven_days_ago)
 
         this_week_total = (
-            Payment.objects.filter(status="paid", payment_date__gte=seven_days_ago)
-            .aggregate(total=Sum("amount")).get("total") or Decimal("0")
+            Payment.objects
+            .filter(status="paid", payment_date__gte=seven_days_ago)
+            .aggregate(total=Sum("amount"))
+            .get("total") or Decimal("0")
         )
 
         last_week_total = (
-            Payment.objects.filter(
+            Payment.objects
+            .filter(
                 status="paid",
                 payment_date__gte=fourteen_days_ago,
                 payment_date__lt=seven_days_ago,
             )
-            .aggregate(total=Sum("amount")).get("total") or Decimal("0")
+            .aggregate(total=Sum("amount"))
+            .get("total") or Decimal("0")
         )
 
-        if last_week_total > 0:
-            week_growth = round(((this_week_total - last_week_total) / last_week_total) * 100)
-        else:
-            week_growth = 100 if this_week_total > 0 else 0
+        week_growth = (
+            round(((this_week_total - last_week_total) / last_week_total) * 100)
+            if last_week_total > 0
+            else (100 if this_week_total > 0 else 0)
+        )
 
         # ----------------------------------------------------------
         # CONTEXTO FINAL
         # ----------------------------------------------------------
+
         context.update(
             {
-                # Financeiro
                 "total_received": total_received,
                 "total_refunded": payments_stats["total_refunded"] or Decimal("0"),
                 "total_chargeback": payments_stats["total_chargeback"] or Decimal("0"),
 
-                # Contagens Payment
                 "total_pagos": payments_stats["total_paid"],
                 "total_processando": payments_stats["total_processing"],
                 "total_falhados": payments_stats["total_failed"],
                 "total_cancelados": payments_stats["total_canceled"],
 
-                # Pipeline
                 "valor_em_aberto": valor_em_aberto,
                 "total_links_ativos": total_links_em_aberto,
                 "total_links_criados": links_stats["total_links"],
                 "total_links_expirados": links_stats["total_expired"],
 
-                # Métricas
                 "taxa_conversao": taxa_conversao,
                 "ticket_medio": ticket_medio,
                 "total_sellers": total_sellers,
 
-                # UI
                 "recent_links": links_data,
                 "chart_data": chart_data,
                 "this_week_total": this_week_total,

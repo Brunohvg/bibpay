@@ -13,6 +13,7 @@ urlpatterns = [
 
     # API
     path("api/orders/", include("apps.orders.api.urls")),
+    path("api/payments/", include("apps.payments.api.urls")),
 ]
 
 if settings.DEBUG:

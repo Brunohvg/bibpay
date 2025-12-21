@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 
 from apps.orders.models import Order
-from apps.orders.domain.order import build_order
+from apps.orders.domain.rules import build_order
 from apps.orders.utils import formatar_valor
 from apps.sellers.services.queries import get_seller
 

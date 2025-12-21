@@ -2,8 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from apps.orders.services.order_service import create_order, get_order
-from apps.orders.services.order_query_service import list_orders_filtered
+from apps.orders.services.commands import create_order, get_order
+from apps.orders.services.queries import list_orders_filtered
 from .serializers import OrderSerializer
 
 

@@ -3,7 +3,7 @@ from django.dispatch import receiver
 
 from apps.orders.models import Order
 from apps.payments.models import PaymentLink
-from apps.payments.services import process_payment_link_for_order
+from apps.payments.services.commands import process_payment_link_for_order
 
 
 @receiver(post_save, sender=Order)
