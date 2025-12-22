@@ -1,4 +1,12 @@
-# apps/notifications/templates.py
+from evolutionapi.models.message import TextMessage
+
+# Mensagem simples
+message = TextMessage(
+    number="5511999999999",
+    text="Olá, como você está?",
+    delay=1000  # delay opcional em ms
+)
+
 
 def payment_link_message(link: str) -> str:
     return f"""
