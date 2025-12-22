@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View
 from django.views.generic import ListView
 
@@ -10,6 +10,11 @@ from apps.orders.services.commands import (
 from apps.orders.services.queries import list_orders_filtered
 from apps.orders.services.freight_calculator import calcular_frete_from_request
 from apps.sellers.services.queries import list_sellers
+
+
+def post_redirect_get(request, payment_link, order):
+    """Helper para implementar POST-Redirect-GET no formulário de pedido"""
+    return redirect("orders:order-success", pk=order.pk)
 
 
 class OrderCreateView(View):
@@ -26,15 +31,8 @@ class OrderCreateView(View):
     def post(self, request):
         order = create_order(request.POST.dict())
         payment_link = get_latest_payment_link(order)
+        return redirect("orders:order-success", pk=order.pk)
 
-        return render(
-            request,
-            "orders/order_success.html",
-            {
-                "order": order,
-                "payment_link": payment_link,
-            }
-        )
 
 class OrderSuccessView(View):
 
