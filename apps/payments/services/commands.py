@@ -25,6 +25,7 @@ from django.utils import timezone
 
 from apps.payments.models import Payment, PaymentLink
 from apps.core.integrations.pagarme import PagarMePaymentLink
+from apps.notifications.services.payment_notifications import payment_status as ps
 
 # REGRAS DE NEGÓCIO (DOMÍNIO)
 from apps.payments.domain.rules import (
@@ -125,6 +126,8 @@ def process_payment_webhook(webhook_data: dict) -> Payment | None:
         return None
 
     pagarme_status = data.get("status")
+    print(pagarme_status)
+    
 
     # Tradução status externo → interno
     payment_status_map = {
@@ -181,7 +184,8 @@ def process_payment_webhook(webhook_data: dict) -> Payment | None:
         if new_order_status:
             order.status = new_order_status
             order.save(update_fields=["status"])
-
+    
+    ps(payment=payment)
     return payment
 
 
