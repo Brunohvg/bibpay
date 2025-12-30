@@ -12,9 +12,9 @@ from evolutionapi.exceptions import (
 # Logger
 logger = logging.getLogger("integrations")
 
-# Variáveis de ambiente
-URL_SERVE = config("URL_SERVE", default="")
-API_KEY = config("API_KEY", default="")
+# Variáveis de ambiente (com fallback para compatibilidade)
+URL_SERVE = config("EVOLUTION_API_URL", default=config("URL_SERVE", default=""))
+API_KEY = config("EVOLUTION_API_KEY", default=config("API_KEY", default=""))
 MAX_RETRIES = config("MAX_RETRIES", default=3, cast=int)
 RETRY_DELAY = config("RETRY_DELAY", default=2, cast=int)
 

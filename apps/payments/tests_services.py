@@ -55,10 +55,10 @@ class PaymentsServicesTests(TestCase):
         """Testa criação de registro de pagamento via webhook."""
         payload = {
             'data': {
-                'id': self.link.id_link,
+                'code': self.link.id_link,  # Correto: o webhook usa 'code'
                 'status': 'paid',
-                'amount': int(self.link.amount * 100),
-                'paid_at': timezone.now(),
+                'paid_amount': int(self.link.amount * 100),  # centavos
+                'paid_at': timezone.now().isoformat(),
             }
         }
         payment = services.process_payment_webhook(payload)
@@ -66,7 +66,8 @@ class PaymentsServicesTests(TestCase):
         self.assertEqual(payment.status, 'paid')
         # PaymentLink should be updated
         self.link.refresh_from_db()
-        self.assertEqual(self.link.status, 'paid')
+        self.assertEqual(self.link.status, 'used')  # status correto é 'used', não 'paid'
+
 
     def test_get_payment_links_multiple(self):
         """Testa busca de múltiplos links para um pedido."""
@@ -112,28 +113,29 @@ class PaymentsServicesTests(TestCase):
         """Testa webhook com dados inválidos."""
         payload = {
             'data': {
-                'id': 'link_inexistente',
+                'code': 'link_inexistente',  # 'code' usado pelo webhook
                 'status': 'paid',
-                'amount': 2500,
+                'paid_amount': 2500,
             }
         }
         
-        # Não deve gerar erro
+        # Não deve gerar erro, retorna None para link inexistente
         result = services.process_payment_webhook(payload)
+        self.assertIsNone(result)
 
     def test_webhook_status_update(self):
         """Testa atualização de status via webhook."""
         payload = {
             'data': {
-                'id': self.link.id_link,
+                'code': self.link.id_link,  # 'code' usado pelo webhook
                 'status': 'failed',
-                'amount': int(self.link.amount * 100),
+                'paid_amount': int(self.link.amount * 100),
             }
         }
         
         payment = services.process_payment_webhook(payload)
-        if payment:
-            self.assertEqual(payment.status, 'failed')
+        self.assertIsNotNone(payment)
+        self.assertEqual(payment.status, 'failed')
 
     def test_get_payment_by_link_id(self):
         """Testa busca de pagamento por ID do link."""
@@ -213,24 +215,27 @@ class PaymentsServicesTests(TestCase):
         """Testa processamento múltiplo de webhook para mesmo link."""
         payload1 = {
             'data': {
-                'id': self.link.id_link,
+                'code': self.link.id_link,
                 'status': 'pending',
-                'amount': int(self.link.amount * 100),
+                'paid_amount': int(self.link.amount * 100),
             }
         }
         
         result1 = services.process_payment_webhook(payload1)
+        self.assertIsNotNone(result1)
         
-        # Segundo processamento
+        # Segundo processamento - atualiza status
         payload2 = {
             'data': {
-                'id': self.link.id_link,
+                'code': self.link.id_link,
                 'status': 'paid',
-                'amount': int(self.link.amount * 100),
+                'paid_amount': int(self.link.amount * 100),
             }
         }
         
         result2 = services.process_payment_webhook(payload2)
+        self.assertIsNotNone(result2)
+        self.assertEqual(result2.status, 'paid')
 
     def test_cancel_already_canceled_link(self):
         """Testa cancelamento de link já cancelado."""
