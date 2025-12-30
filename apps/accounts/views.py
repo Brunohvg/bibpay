@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
+from django.conf import settings
 
 
 def login_view(request):
@@ -13,7 +14,7 @@ def login_view(request):
     POST: Processa login e redireciona para dashboard
     """
     if request.user.is_authenticated:
-        return redirect('dashboard:dashboard-home')
+        return redirect(settings.LOGIN_REDIRECT_URL)
     
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -25,8 +26,8 @@ def login_view(request):
                 login(request, user)
                 messages.success(request, f'Bem-vindo, {username}!')
                 
-                # Redirecionar para 'next' se existir, senão para dashboard
-                next_url = request.GET.get('next', 'dashboard:index')
+                # Redirecionar para 'next' se existir, senão para LOGIN_REDIRECT_URL
+                next_url = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
                 return redirect(next_url)
         else:
             messages.error(request, 'Usuário ou senha inválidos')
@@ -56,7 +57,7 @@ def signup_view(request):
     POST: Cria novo usuário e faz login automático
     """
     if request.user.is_authenticated:
-        return redirect('dashboard:index')
+        return redirect(settings.LOGIN_REDIRECT_URL)
     
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -64,7 +65,7 @@ def signup_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Conta criada com sucesso! Bem-vindo!')
-            return redirect('dashboard:index')
+            return redirect(settings.LOGIN_REDIRECT_URL)
         else:
             messages.error(request, 'Erro ao criar conta. Verifique os dados.')
     else:

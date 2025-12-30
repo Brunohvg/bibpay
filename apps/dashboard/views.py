@@ -15,6 +15,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -24,7 +25,7 @@ from apps.payments.models import Payment, PaymentLink
 from apps.sellers.models import Seller
 
 
-class DashboardHomeView(TemplateView):
+class DashboardHomeView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/dashboard.html"
 
     # ==============================================================

@@ -137,6 +137,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # ========================================
+# Authentication Configuration
+# ========================================
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+
+# ========================================
 # REST Framework Configuration
 # ========================================
 REST_FRAMEWORK = {
@@ -192,6 +200,31 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+
+# ========================================
+# Celery Configuration (Task Queue)
+# ========================================
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+
+# Configurações otimizadas para Oracle Free Tier (1GB RAM)
+CELERY_WORKER_CONCURRENCY = 2  # Limitar workers
+CELERY_TASK_ACKS_LATE = True   # Acknowledge após processamento
+CELERY_TASK_REJECT_ON_WORKER_LOST = True  # Reprocessar se worker morrer
+
+# Serialização
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Timezone
+CELERY_TIMEZONE = 'America/Sao_Paulo'
+CELERY_ENABLE_UTC = True
+
+# Retry padrão para tasks
+CELERY_TASK_DEFAULT_RETRY_DELAY = 60  # 1 minuto
+CELERY_TASK_MAX_RETRIES = 3
 
 
 # ========================================

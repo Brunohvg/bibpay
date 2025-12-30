@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from django.views import View
 from django.views.generic import ListView
@@ -62,7 +63,7 @@ class OrderSuccessView(View):
             }
         )
 
-class OrderListView(ListView):
+class OrderListView(LoginRequiredMixin, ListView):
     template_name = "orders/order_list.html"
     context_object_name = "orders"
     paginate_by = 10
