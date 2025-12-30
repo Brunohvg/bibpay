@@ -65,14 +65,19 @@ class Order(BaseModel):
         Seller,
         on_delete=models.CASCADE,
         verbose_name='Vendedor',
-        help_text='Vendedor do pedido'
+        help_text='Vendedor do pedido',
+        db_index=True
     )
-
-    def __str__(self):
-        return self.name
-
+    
+    # created_at já é indexado pelo ordering do Meta geralmente, mas vamos garantir se explicitado
+    # Na verdade BaseModel já tem created_at, vamos checar se precisamos mexer lá ou indexar via Meta
+    
     class Meta:
         verbose_name = 'Pedido'
         verbose_name_plural = 'Pedidos'
         ordering = ['-created_at']
         db_table = 'orders'
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['seller', 'created_at']),
+        ]

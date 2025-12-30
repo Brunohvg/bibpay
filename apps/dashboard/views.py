@@ -20,13 +20,20 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from django.views.generic import TemplateView
+from django.shortcuts import redirect
 
 from apps.payments.models import Payment, PaymentLink
 from apps.sellers.models import Seller
+from apps.sales.models import DailySale
 
 
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/dashboard.html"
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and hasattr(request.user, 'seller_profile'):
+            return redirect('sales:seller-dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     # ==============================================================
     # STATUS VISUAL (UI ONLY)
@@ -253,8 +260,45 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
                 "this_week_total": this_week_total,
                 "last_week_total": last_week_total,
                 "week_growth": week_growth,
+                "week_growth": week_growth,
                 "week_growth_positive": week_growth >= 0,
             }
         )
+
+        # ----------------------------------------------------------
+        # VENDAS / COMISSÕES (SALES APP)
+        # ----------------------------------------------------------
+        
+        # Total Vendas Mês Atual
+        first_day_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        sales_month_total = DailySale.objects.filter(
+            date__gte=first_day_month.date()
+        ).aggregate(total=Sum('amount'))['total'] or Decimal("0")
+        
+        # Ranking Vendedores (Mês Atual)
+        ranking_qs = (
+            DailySale.objects
+            .filter(date__gte=first_day_month.date())
+            .values('seller__name')
+            .annotate(total_sold=Sum('amount'))
+            .order_by('-total_sold')[:5]
+        )
+        
+        sales_ranking = []
+        max_sold = ranking_qs[0]['total_sold'] if ranking_qs else 1
+        
+        for item in ranking_qs:
+            total = item['total_sold']
+            sales_ranking.append({
+                'name': item['seller__name'],
+                'total': total,
+                'percent': int((total / sales_month_total) * 100) if sales_month_total else 0,
+                'width': int((total / max_sold) * 100) if max_sold else 0
+            })
+            
+        context.update({
+            'sales_month_total': sales_month_total,
+            'sales_ranking': sales_ranking,
+        })
 
         return context

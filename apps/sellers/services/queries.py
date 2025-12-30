@@ -3,7 +3,7 @@ from apps.sellers.models import Seller
 
 
 def list_sellers():
-    return Seller.objects.all()
+    return Seller.objects.all().distinct()
 
 
 def get_seller(seller_id: int) -> Seller:

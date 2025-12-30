@@ -70,19 +70,25 @@
                 </div>
             </div>
 
-            <div class="input-box">
-                <label for="vendedor">Vendedor</label>
-                <div class="input-wrapper">
-                    <i class="bi bi-shop"></i>
-                    <select name="vendedor" id="vendedor" required>
-                        <option value="" disabled selected>Selecione...</option>
-                        {% for seller in sellers %}
-                            <option value="{{ seller.id }}">{{ seller.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <i class="bi bi-chevron-down select-arrow"></i>
+            {% if request.user.seller_profile %}
+                <!-- Vendedor logado: Campo oculto -->
+                <input type="hidden" name="vendedor" value="{{ request.user.seller_profile.id }}">
+            {% else %}
+                <!-- Admin: Dropdown de seleção -->
+                <div class="input-box">
+                    <label for="vendedor">Vendedor</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-shop"></i>
+                        <select name="vendedor" id="vendedor" required>
+                            <option value="" disabled selected>Selecione...</option>
+                            {% for seller in sellers %}
+                                <option value="{{ seller.id }}">{{ seller.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="bi bi-chevron-down select-arrow"></i>
+                    </div>
                 </div>
-            </div>
+            {% endif %}
         </div>
 
         <div class="form-section">

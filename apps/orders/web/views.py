@@ -69,7 +69,18 @@ class OrderListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return list_orders_filtered(self.request.GET)
+        # Captura os parâmetros originais
+        filters = self.request.GET.copy()
+        
+        # Se não for admin, FORÇA o filtro pelo próprio vendedor
+        if not self.request.user.is_superuser:
+            if hasattr(self.request.user, 'seller_profile'):
+                filters['seller'] = str(self.request.user.seller_profile.id)
+            else:
+                # Se não é seller nem admin, não vê nada (ou tratar diferente)
+                return []
+                
+        return list_orders_filtered(filters)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
