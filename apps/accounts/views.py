@@ -13,7 +13,7 @@ def login_view(request):
     POST: Processa login e redireciona para dashboard
     """
     if request.user.is_authenticated:
-        return redirect('dashboard:index')
+        return redirect('dashboard:dashboard-home')
     
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)

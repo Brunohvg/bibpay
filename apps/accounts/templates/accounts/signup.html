@@ -1,35 +1,101 @@
 {% extends "base_auth.html" %}
 
-{% block title_auth %}Crie sua Conta{% endblock %}
-{% block subtitle_auth %}Preencha seus dados{% endblock %}
+{% block title %}Cadastro{% endblock %}
 
-{% block content_auth %}
+{% block content %}
+    <div class="auth-logo">
+        <i class="bi bi-person-plus-fill"></i>
+        <h1>Criar Conta</h1>
+        <p>Cadastre-se no BibPay</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            Por favor, corrija os erros abaixo.
+        </div>
+    {% endif %}
+
     <form method="post" action="{% url 'accounts:signup' %}">
         {% csrf_token %}
         
-        {% for field in form %}
-            <div class="form-floating mb-3">
-                {{ field }}
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.errors %}
-                    <div class="invalid-feedback d-block">
-                        {{ field.errors.as_text }}
-                    </div>
-                {% endif %}
-            </div>
-        {% endfor %}
+        <div class="mb-3">
+            <label for="id_username" class="form-label">Usuário</label>
+            <input type="text" 
+                   name="username" 
+                   autofocus 
+                   autocapitalize="none" 
+                   autocomplete="username" 
+                   class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                   required 
+                   id="id_username" 
+                   placeholder="Escolha um nome de usuário">
+            {% if form.username.errors %}
+                <div class="invalid-feedback">
+                    {{ form.username.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
 
-        <div class="d-grid mt-4">
-            <button type="submit" class="btn-gerar-link">
-                <i class="bi bi-person-plus-fill me-2"></i>
-                Cadastrar
+        <div class="mb-3">
+            <label for="id_password1" class="form-label">Senha</label>
+            <input type="password" 
+                   name="password1" 
+                   autocomplete="new-password" 
+                   class="form-control {% if form.password1.errors %}is-invalid{% endif %}" 
+                   required 
+                   id="id_password1" 
+                   placeholder="Crie uma senha forte">
+            {% if form.password1.errors %}
+                <div class="invalid-feedback">
+                    {{ form.password1.errors.0 }}
+                </div>
+            {% endif %}
+            <small class="text-muted">Mínimo 8 caracteres</small>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_password2" class="form-label">Confirmar Senha</label>
+            <input type="password" 
+                   name="password2" 
+                   autocomplete="new-password" 
+                   class="form-control {% if form.password2.errors %}is-invalid{% endif %}" 
+                   required 
+                   id="id_password2" 
+                   placeholder="Digite a senha novamente">
+            {% if form.password2.errors %}
+                <div class="invalid-feedback">
+                    {{ form.password2.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="d-grid mb-3">
+            <button type="submit" class="btn-primary-auth">
+                <i class="bi bi-person-check me-2"></i>
+                Criar Conta
             </button>
         </div>
     </form>
-{% endblock %}
 
-{% block footer_auth %}
-    <p>
-        Já tem uma conta? <a href="{% url 'accounts:login' %}">Faça login</a>
-    </p>
+    <div class="divider">
+        <span>ou</span>
+    </div>
+
+    <div class="text-center">
+        <p class="mb-0">
+            Já tem uma conta? 
+            <a href="{% url 'accounts:login' %}" class="text-link">
+                Faça login
+            </a>
+        </p>
+    </div>
 {% endblock %}

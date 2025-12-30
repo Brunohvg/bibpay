@@ -17,3 +17,79 @@ Traceback (most recent call last):
     raise NoReverseMatch(msg)
 django.urls.exceptions.NoReverseMatch: Reverse for 'index' not found. 'index' is not a valid view function or pattern name.
 ERROR 2025-12-29 22:32:45,789 basehttp 6418 131952756086464 "GET /accounts/login/ HTTP/1.1" 500 88632
+ERROR 2025-12-29 22:39:03,031 log 7881 124853584090816 Internal Server Error: /accounts/login/
+Traceback (most recent call last):
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/vidal/Projetos/bibpay/apps/accounts/views.py", line 16, in login_view
+    return redirect('dashboard:index')
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 51, in redirect
+    resolve_url(to, *args, **kwargs),
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 184, in resolve_url
+    return reverse(to, args=args, kwargs=kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'index' not found. 'index' is not a valid view function or pattern name.
+ERROR 2025-12-29 22:39:03,034 basehttp 7881 124853584090816 "GET /accounts/login/ HTTP/1.1" 500 88769
+ERROR 2025-12-29 22:39:09,704 log 7881 124853584090816 Internal Server Error: /accounts/login/
+Traceback (most recent call last):
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/vidal/Projetos/bibpay/apps/accounts/views.py", line 16, in login_view
+    return redirect('dashboard:index')
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 51, in redirect
+    resolve_url(to, *args, **kwargs),
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 184, in resolve_url
+    return reverse(to, args=args, kwargs=kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'index' not found. 'index' is not a valid view function or pattern name.
+ERROR 2025-12-29 22:39:09,706 basehttp 7881 124853584090816 "GET /accounts/login/ HTTP/1.1" 500 88632
+ERROR 2025-12-29 22:40:58,393 log 7881 124853357115072 Internal Server Error: /accounts/login/
+Traceback (most recent call last):
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/vidal/Projetos/bibpay/apps/accounts/views.py", line 16, in login_view
+    return redirect('dashboard:index')
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 51, in redirect
+    resolve_url(to, *args, **kwargs),
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 184, in resolve_url
+    return reverse(to, args=args, kwargs=kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'index' not found. 'index' is not a valid view function or pattern name.
+ERROR 2025-12-29 22:40:58,395 basehttp 7881 124853357115072 "GET /accounts/login/ HTTP/1.1" 500 88632
+ERROR 2025-12-29 22:41:34,255 log 9180 123852866803392 Internal Server Error: /accounts/login/
+Traceback (most recent call last):
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/vidal/Projetos/bibpay/apps/accounts/views.py", line 16, in login_view
+    return redirect('dashboard:dashboard')
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 51, in redirect
+    resolve_url(to, *args, **kwargs),
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/shortcuts.py", line 184, in resolve_url
+    return reverse(to, args=args, kwargs=kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/home/vidal/Projetos/bibpay/.venv/lib/python3.14/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+ERROR 2025-12-29 22:41:34,260 basehttp 9180 123852866803392 "GET /accounts/login/ HTTP/1.1" 500 88849
