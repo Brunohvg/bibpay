@@ -1,4 +1,5 @@
 # 🎯 ROTEIRO COMPLETO DJANGO PARA INICIANTE AUTODIDATA
+## uv sync --group dev --group infra
 
 ## ⚠️ VERDADE INCÔMODA
 Você vai:
@@ -7,7 +8,7 @@ Você vai:
 - ❌ Ver padrão diferente em outro projeto e ficar confuso
 - ❌ Levar 3–6 meses pra internalizar isso
 
-👉 **Isso é NORMAL.**  
+👉 **Isso é NORMAL.**
 👉 **Seguindo este documento, você erra 70% menos.**
 
 ---
@@ -29,7 +30,7 @@ Você vai:
 - Docker
 - Celery
 
-**Ordem correta:**  
+**Ordem correta:**
 Estrutura → Básico → Testes → Async → Containers
 
 ---
