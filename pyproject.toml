@@ -1,7 +1,7 @@
 [project]
 name = "bibpay"
 version = "0.1.0"
-description = "Add your description here"
+description = "Sistema de Gerenciamento de Pedidos e Pagamentos"
 readme = "README.md"
 requires-python = ">=3.14.0"
 dependencies = [
@@ -10,9 +10,18 @@ dependencies = [
     "evolutionapi>=0.1.2",
     "python-decouple>=3.8",
     "requests>=2.32.5",
+    "gunicorn>=21.2.0",
+    "psycopg2-binary>=2.9.9",
+    "drf-spectacular>=0.27.0",
+    "whitenoise>=6.6.0",
 ]
 
 [dependency-groups]
 dev = [
     "coverage>=7.13.0",
+    "pytest>=7.4.0",
+    "pytest-django>=4.7.0",
+    "ruff>=0.1.0",
+    "black>=23.12.0",
+    "isort>=5.13.0",
 ]

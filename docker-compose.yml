@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: bibpay_db
+    environment:
+      POSTGRES_DB: bibpay
+      POSTGRES_USER: bibpay
+      POSTGRES_PASSWORD: bibpay_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bibpay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bibpay_network
+
+  # Aplicação Django
+  web:
+    build: .
+    container_name: bibpay_web
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://bibpay:bibpay_password@db:5432/bibpay
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bibpay_network
+
+  # Nginx (opcional, para produção)
+  nginx:
+    image: nginx:alpine
+    container_name: bibpay_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/app/static:ro
+      - media_volume:/app/media:ro
+    depends_on:
+      - web
+    networks:
+      - bibpay_network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks:
+  bibpay_network:
+    driver: bridge

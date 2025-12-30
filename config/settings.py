@@ -22,6 +22,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lamb
 
 INSTALLED_APPS = [
     'rest_framework',
+    'drf_spectacular',  # API Documentation
 
     # Default Django Apps
     'django.contrib.admin',
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -151,7 +153,27 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+
+# ========================================
+# API Documentation (drf-spectacular)
+# ========================================
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'BibPay API',
+    'DESCRIPTION': 'API para gerenciamento de pedidos e pagamentos com integração a gateways de pagamento',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': r'/api/',
+}
+
+
+# ========================================
+# WhiteNoise Configuration (Static Files)
+# ========================================
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # ========================================

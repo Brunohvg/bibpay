@@ -1,0 +1,113 @@
+name: Tests and Linting
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: bibpay_test
+          POSTGRES_USER: bibpay
+          POSTGRES_PASSWORD: bibpay_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        pip install uv
+        uv pip install --system -e .
+        uv pip install --system coverage pytest pytest-django
+    
+    - name: Create .env file
+      run: |
+        echo "SECRET_KEY=test-secret-key-for-ci" > .env
+        echo "DEBUG=True" >> .env
+        echo "DATABASE_URL=postgresql://bibpay:bibpay_test@localhost:5432/bibpay_test" >> .env
+    
+    - name: Run migrations
+      run: python manage.py migrate
+      env:
+        DATABASE_URL: postgresql://bibpay:bibpay_test@localhost:5432/bibpay_test
+    
+    - name: Run tests with coverage
+      run: |
+        coverage run --source='apps' manage.py test
+        coverage report
+        coverage xml
+      env:
+        DATABASE_URL: postgresql://bibpay:bibpay_test@localhost:5432/bibpay_test
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-bibpay
+        fail_ci_if_error: false
+    
+    - name: Check deployment readiness
+      run: python manage.py check --deploy
+      env:
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: False
+        DATABASE_URL: postgresql://bibpay:bibpay_test@localhost:5432/bibpay_test
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    
+    - name: Install linting tools
+      run: |
+        pip install ruff black isort
+    
+    - name: Run ruff
+      run: ruff check apps/ config/
+      continue-on-error: true
+    
+    - name: Check code formatting with black
+      run: black --check apps/ config/
+      continue-on-error: true
+    
+    - name: Check import sorting with isort
+      run: isort --check-only apps/ config/
+      continue-on-error: true
